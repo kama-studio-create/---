@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Aviator Game</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background:#0b1220; color:#fff; margin:0; padding:0; }
+    header { padding:12px; background:#071026; display:flex; justify-content:space-between; align-items:center; }
+    .container { padding:16px; max-width:1000px; margin:0 auto; }
+    #game-area { position:relative; height:320px; background:linear-gradient(#0b1b2b,#071026); border-radius:8px; overflow:hidden; }
+    #plane { position:absolute; left:10px; top:220px; font-size:48px; transition:transform 0.2s linear; }
+    #explosion { position:absolute; display:none; left:50%; top:50%; transform:translate(-50%,-50%); font-size:64px; color:#ff4c4c;}
+    #multiplier { font-size:28px; margin-top:8px; }
+    .panel { margin-top:12px; display:flex; gap:12px; flex-wrap:wrap; }
+    .card { background:#071627; padding:12px; border-radius:8px; min-width:180px; }
+    input, button { padding:8px; border-radius:6px; border:none; }
+    button { cursor:pointer; }
+    table { width:100%; color:#fff; }
+  </style>
+</head>
+<body>
+  <header>
+    <div><strong>Aviator</strong></div>
+    <div id="user-panel">Not connected</div>
+  </header>
+
+  <div class="container">
+    <div id="game-area">
+      <div id="plane">✈️</div>
+      <div id="explosion">💥</div>
+    </div>
+
+    <div id="multiplier">1.00x</div>
+
+    <div class="panel">
+      <div class="card">
+        <div>Balance: <span id="balance">0</span></div>
+        <div style="margin-top:8px">
+          <input id="betAmount" type="number" placeholder="Bet amount" min="1" />
+          <button id="betBtn">Bet</button>
+        </div>
+        <div style="margin-top:8px">
+          <button id="cashoutBtn">Cashout</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>Withdraw</h4>
+        <input id="withdrawAmount" type="number" placeholder="Amount" />
+        <input id="withdrawRef" placeholder="Reference (acct/crypto)" />
+        <button id="withdrawBtn">Request Withdraw</button>
+      </div>
+
+      <div class="card">
+        <h4>Deposit</h4>
+        <input id="depositAmount" type="number" placeholder="Amount" />
+        <input id="depositRef" placeholder="Payment reference" />
+        <button id="depositBtn">Request Deposit</button>
+      </div>
+
+      <div class="card">
+        <h4>History</h4>
+        <button id="loadHistory">Load</button>
+        <div id="historyArea" style="max-height:180px; overflow:auto;"></div>
+      </div>
+
+      <div class="card">
+        <h4>Leaderboard</h4>
+        <button id="loadLB">Load</button>
+        <div id="leaderboardArea"></div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:18px">Game Log</h3>
+    <div id="log" style="background:#051022;padding:12px;border-radius:8px;max-height:220px;overflow:auto;"></div>
+  </div>
+
+  <script>
+    const socket = io();
+    let currentMultiplier = 1;
+    let hasActiveBet = false;
+    let user = { telegramId: null };
+    const log = document.getElementById('log');
+
+    function appendLog(s) { const el = document.createElement('div'); el.innerText = '[' + new Date().toLocaleTimeString() + '] ' + s; log.prepend(el); }
+
+    const plane = document.getElementById('plane');
+    const explosion = document.getElementById('explosion');
+    const multiplierEl = document.getElementById('multiplier');
+    const balanceEl = document.getElementById('balance');
+
+    function resetPlane() {
+      plane.style.display='block';
+      explosion.style.display='none';
+      plane.style.transform = 'translate(10px,220px)';
+    }
+
+    socket.on('connect', () => appendLog('Connected to server'));
+    socket.on('game:bettingPhase', (data) => {
+      appendLog('Betting phase started');
+      resetPlane();
+      multiplierEl.innerText = 'Place your bets';
+    });
+    socket.on('game:takeoff', (d) => {
+      appendLog('Takeoff!');
+    });
+    socket.on('game:multiplierUpdate', (d) => {
+      currentMultiplier = Number((d.multiplier || d).toFixed ? d.multiplier : d);
+      multiplierEl.innerText = currentMultiplier.toFixed(2) + 'x';
+      const progress = Math.min(1, (currentMultiplier - 1) / 10);
+      const x = 10 + progress * (window.innerWidth - 200);
+      const y = 220 - progress * 180;
+      plane.style.transform = `translate(${x}px, ${y}px)`;
+    });
+    socket.on('game:crashed', (d) => {
+      appendLog('Crashed at ' + (d.finalMultiplier || d.multiplier));
+      multiplierEl.innerText = '💥 Crashed at ' + (d.finalMultiplier || d.multiplier) + 'x';
+      plane.style.display='none';
+      explosion.style.display='block';
+      setTimeout(resetPlane, 2000);
+    });
+    socket.on('game:betPlaced', b => appendLog('Bet placed: ' + JSON.stringify(b)));
+    socket.on('game:cashOut', c => appendLog('Cashout: ' + JSON.stringify(c)));
+
+    async function api(path, method='GET', body) {
+      const opts = { method, headers: { 'Content-Type':'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch('/api/player' + path, opts);
+      return res.json();
+    }
+
+    if (!user.telegramId) {
+      const idPrompt = prompt('Enter your telegram id (for testing)', '');
+      if (idPrompt) {
+        user.telegramId = Number(idPrompt);
+        document.getElementById('user-panel').innerText = 'You: ' + user.telegramId;
+        api('/register', 'POST', { telegramId: user.telegramId, username: 'webuser' }).then(r => {
+          if (r.ok) {
+            balanceEl.innerText = r.user.balance;
+            appendLog('Registered locally');
+          } else {
+            appendLog('Register failed');
+          }
+        });
+      }
+    }
+
+    document.getElementById('betBtn').addEventListener('click', async () => {
+      const amount = Number(document.getElementById('betAmount').value);
+      if (!amount || amount <= 0) return alert('Enter amount');
+      const r = await api('/bet', 'POST', { telegramId: user.telegramId, amount });
+      if (!r.ok) return alert('Bet failed: ' + (r.error || ''));
+      balanceEl.innerText = r.balance;
+      hasActiveBet = true;
+      socket.emit('placeBet', { telegramId: user.telegramId, amount });
+      appendLog('Bet placed: ' + amount);
+    });
+
+    document.getElementById('cashoutBtn').addEventListener('click', async () => {
+      if (!hasActiveBet) return alert('No active bet');
+      socket.emit('cashOut', { telegramId: user.telegramId });
+      appendLog('Cashout requested');
+    });
+
+    document.getElementById('withdrawBtn').addEventListener('click', async () => {
+      const amount = Number(document.getElementById('withdrawAmount').value);
+      const ref = document.getElementById('withdrawRef').value || '';
+      if (!amount) return alert('Enter amount');
+      const r = await api('/withdraw', 'POST', { telegramId: user.telegramId, amount, reference: ref });
+      if (!r.ok) return alert('Withdraw failed: ' + (r.error||''));
+      alert('Withdraw requested');
+      appendLog('Withdraw requested: ' + amount);
+    });
+
+    document.getElementById('depositBtn').addEventListener('click', async () => {
+      const amount = Number(document.getElementById('depositAmount').value);
+      const ref = document.getElementById('depositRef').value || '';
+      if (!amount) return alert('Enter amount');
+      const r = await api('/deposit', 'POST', { telegramId: user.telegramId, amount, reference: ref });
+      if (!r.ok) return alert('Deposit failed: ' + (r.error||''));
+      alert('Deposit requested for admin approval');
+      appendLog('Deposit requested: ' + amount);
+    });
+
+    document.getElementById('loadHistory').addEventListener('click', async () => {
+      const r = await api('/history/' + user.telegramId, 'GET');
+      if (!r.ok) return alert('Failed to load history');
+      const area = document.getElementById('historyArea');
+      area.innerHTML = '<pre>' + JSON.stringify(r.history, null, 2) + '</pre>';
+    });
+
+    document.getElementById('loadLB').addEventListener('click', async () => {
+      const r = await api('/leaderboard', 'GET');
+      if (!r.ok) return alert('Failed to load leaderboard');
+      const area = document.getElementById('leaderboardArea');
+      area.innerHTML = '<pre>' + JSON.stringify(r.leaderboard, null, 2) + '</pre>';
+    });
+  </script>
+</body>
+</html>

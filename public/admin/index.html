@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Aviator Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; background:#071022; color:#fff; margin:0; padding:16px; }
+    .panel { background:#0b1b2b; padding:12px; border-radius:8px; margin-bottom:12px; }
+    button{ padding:8px; margin-right:6px; }
+    table { width:100%; color:#fff; border-collapse:collapse;}
+    td,th{ padding:8px; border-bottom:1px solid #133246;}
+  </style>
+</head>
+<body>
+  <h1>Admin Dashboard</h1>
+  <div class="panel">
+    <label>Admin Token: <input id="token" style="width:60%" /></label>
+    <button onclick="loadUsers()">Load Users</button>
+    <button onclick="loadWithdraws()">Withdraws</button>
+    <button onclick="loadDeposits()">Deposits</button>
+    <button onclick="loadTransactions()">Transactions</button>
+    <button onclick="loadRounds()">Rounds</button>
+  </div>
+
+  <div id="content"></div>
+
+  <script>
+    function tokenHeader() {
+      const t = document.getElementById('token').value;
+      return { Authorization: 'Bearer ' + t, 'Content-Type':'application/json' };
+    }
+
+    async function loadUsers() {
+      const res = await fetch('/api/admin/users', { headers: tokenHeader() });
+      const j = await res.json();
+      document.getElementById('content').innerHTML = '<pre>' + JSON.stringify(j.users || j, null, 2) + '</pre>';
+    }
+    async function loadWithdraws() {
+      const res = await fetch('/api/admin/withdraws', { headers: tokenHeader() });
+      const j = await res.json();
+      const rows = (j.requests || []).map(r => `<div>${r._id} - ${r.userId?.username||r.userId?.telegramId} - ${r.amount} - ${r.status} 
+        ${r.status==='pending' ? `<button onclick="approve('${r._id}')">Approve</button><button onclick="deny('${r._id}')">Deny</button>` : ''}</div>`).join('');
+      document.getElementById('content').innerHTML = rows || 'no requests';
+    }
+    async function approve(id) {
+      await fetch('/api/admin/withdraw/' + id + '/approve', { method: 'POST', headers: tokenHeader() });
+      loadWithdraws();
+    }
+    async function deny(id) {
+      await fetch('/api/admin/withdraw/' + id + '/deny', { method: 'POST', headers: tokenHeader() });
+      loadWithdraws();
+    }
+    async function loadDeposits() {
+      const res = await fetch('/api/admin/deposits', { headers: tokenHeader() });
+      const j = await res.json();
+      const rows = (j.requests || []).map(r => `<div>${r._id} - ${r.userId?.username||r.userId?.telegramId} - ${r.amount} - ${r.status} 
+        ${r.status==='pending' ? `<button onclick="approveDep('${r._id}')">Approve</button><button onclick="denyDep('${r._id}')">Deny</button>` : ''}</div>`).join('');
+      document.getElementById('content').innerHTML = rows || 'no deposits';
+    }
+    async function approveDep(id) {
+      await fetch('/api/admin/deposit/' + id + '/approve', { method: 'POST', headers: tokenHeader() });
+      loadDeposits();
+    }
+    async function denyDep(id) {
+      await fetch('/api/admin/deposit/' + id + '/deny', { method: 'POST', headers: tokenHeader() });
+      loadDeposits();
+    }
+    async function loadTransactions() {
+      const res = await fetch('/api/admin/transactions', { headers: tokenHeader() });
+      const j = await res.json();
+      document.getElementById('content').innerHTML = '<pre>' + JSON.stringify(j.transactions || j, null, 2) + '</pre>';
+    }
+    async function loadRounds() {
+      const res = await fetch('/api/admin/rounds', { headers: tokenHeader() });
+      const j = await res.json();
+      document.getElementById('content').innerHTML = '<pre>' + JSON.stringify(j.rounds || j, null, 2) + '</pre>';
+    }
+  </script>
+</body>
+</html>
