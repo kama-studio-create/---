@@ -1,202 +1,1289 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Aviator Game</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <script src="/socket.io/socket.io.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; background:#0b1220; color:#fff; margin:0; padding:0; }
-    header { padding:12px; background:#071026; display:flex; justify-content:space-between; align-items:center; }
-    .container { padding:16px; max-width:1000px; margin:0 auto; }
-    #game-area { position:relative; height:320px; background:linear-gradient(#0b1b2b,#071026); border-radius:8px; overflow:hidden; }
-    #plane { position:absolute; left:10px; top:220px; font-size:48px; transition:transform 0.2s linear; }
-    #explosion { position:absolute; display:none; left:50%; top:50%; transform:translate(-50%,-50%); font-size:64px; color:#ff4c4c;}
-    #multiplier { font-size:28px; margin-top:8px; }
-    .panel { margin-top:12px; display:flex; gap:12px; flex-wrap:wrap; }
-    .card { background:#071627; padding:12px; border-radius:8px; min-width:180px; }
-    input, button { padding:8px; border-radius:6px; border:none; }
-    button { cursor:pointer; }
-    table { width:100%; color:#fff; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1f2e">
+    <title>Aviator - Telegram Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 50%, #2a3441 100%);
+            color: white;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            overscroll-behavior: none;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: calc(var(--vh, 1vh) * 100);
+            width: 100vw;
+            max-width: 100%;
+            margin: 0;
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 50%, #2a3441 100%);
+            position: relative;
+            overflow: hidden;
+            border-radius: 0;
+        }
+
+        /* Mobile Header */
+        .header {
+            background: linear-gradient(135deg, #1a1f2e 0%, #2a3441 100%);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(0, 255, 136, 0.3);
+            backdrop-filter: blur(20px);
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .menu-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Connection Status */
+        .connection-status {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .connection-status.connected {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+
+        .connection-status.disconnected {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+            border: 1px solid #ff4757;
+        }
+
+        .connection-status.connecting {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            font-size: 24px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(45deg, #00d4ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .balance {
+            background: rgba(0, 255, 136, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #00ff88;
+            font-weight: 600;
+        }
+
+        /* Game Area */
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: radial-gradient(circle at center, #1a2332 0%, #0f1419 100%);
+        }
+
+        .flight-display {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .multiplier {
+            font-size: 48px;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px currentColor;
+            transition: all 0.1s ease;
+        }
+
+        .multiplier.flying {
+            color: #00ff88;
+            animation: pulse 0.5s ease-in-out infinite alternate;
+        }
+
+        .multiplier.crashed {
+            color: #ff4757;
+        }
+
+        .multiplier.waiting {
+            color: #ffc107;
+        }
+
+        .multiplier.betting {
+            color: #00d4ff;
+        }
+
+        .plane {
+            font-size: 80px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 0 20px currentColor);
+            position: relative;
+            z-index: 5;
+        }
+
+        .plane.flying {
+            color: #00ff88;
+            animation: flyAdvanced 3s ease-in-out infinite, glow 2s ease-in-out infinite alternate;
+            transform: translateY(-10px) rotate(-15deg);
+        }
+
+        .plane.crashed {
+            color: #ff4757;
+            animation: crash 0.8s ease-out forwards, explode 0.3s ease-out 0.5s forwards;
+        }
+
+        .plane.waiting {
+            color: #ffc107;
+            animation: idle 4s ease-in-out infinite;
+            transform: translateY(5px);
+        }
+
+        .plane.betting {
+            color: #00d4ff;
+            animation: idle 4s ease-in-out infinite;
+            transform: translateY(5px);
+        }
+
+        .plane.takeoff {
+            color: #00ff88;
+            animation: takeoff 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        }
+
+        .status {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .status.flying {
+            color: #00ff88;
+        }
+
+        .status.crashed {
+            color: #ff4757;
+        }
+
+        .status.waiting {
+            color: #ffc107;
+        }
+
+        .status.betting {
+            color: #00d4ff;
+        }
+
+        /* Betting Controls */
+        .betting-controls {
+            background: linear-gradient(135deg, rgba(26, 31, 46, 0.95) 0%, rgba(42, 52, 65, 0.95) 100%);
+            backdrop-filter: blur(25px);
+            padding: 25px;
+            border-top: 2px solid rgba(0, 255, 136, 0.3);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .bet-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .bet-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-size: 18px;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .bet-input:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+        }
+
+        .bet-btn {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            color: black;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 18px;
+            min-width: 140px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+        }
+
+        .bet-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
+            background: linear-gradient(135deg, #00ff88 0%, #00e676 100%);
+        }
+
+        .bet-btn:disabled {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            color: rgba(255, 255, 255, 0.4);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .bet-btn:active:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        .cashout-btn {
+            background: linear-gradient(135deg, #ff4757 0%, #c44569 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cashout-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
+        }
+
+        .cashout-btn:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Quick bet buttons */
+        .quick-bets {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .quick-bet {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quick-bet:hover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        /* Statistics */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #00ff88;
+        }
+
+        /* History */
+        .history {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+
+        .history-item {
+            min-width: 50px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .history-item.low {
+            background: rgba(255, 71, 87, 0.2);
+            border-color: #ff4757;
+            color: #ff4757;
+        }
+
+        .history-item.medium {
+            background: rgba(255, 193, 7, 0.2);
+            border-color: #ffc107;
+            color: #ffc107;
+        }
+
+        .history-item.high {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+
+        /* Notification System */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            color: black;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            z-index: 3000;
+            animation: slideInNotification 0.3s ease;
+            max-width: 300px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #ff4757 0%, #c44569 100%);
+            color: white;
+        }
+
+        .notification.warning {
+            background: linear-gradient(135deg, #ffc107 0%, #f39c12 100%);
+            color: black;
+        }
+
+        /* Enhanced Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.08); }
+        }
+
+        @keyframes flyAdvanced {
+            0%, 100% { 
+                transform: translateX(0px) translateY(-10px) rotate(-15deg); 
+            }
+            25% { 
+                transform: translateX(15px) translateY(-20px) rotate(-20deg); 
+            }
+            50% { 
+                transform: translateX(0px) translateY(-5px) rotate(-10deg); 
+            }
+            75% { 
+                transform: translateX(-15px) translateY(-15px) rotate(-18deg); 
+            }
+        }
+
+        @keyframes takeoff {
+            0% { 
+                transform: translateY(5px) rotate(0deg) scale(1); 
+                opacity: 1;
+            }
+            30% { 
+                transform: translateY(-10px) rotate(-10deg) scale(1.1); 
+                opacity: 1;
+            }
+            100% { 
+                transform: translateY(-15px) rotate(-15deg) scale(1.2); 
+                opacity: 1;
+            }
+        }
+
+        @keyframes crash {
+            0% { 
+                transform: translateY(-10px) rotate(-15deg) scale(1.2); 
+                filter: drop-shadow(0 0 20px #00ff88);
+            }
+            50% { 
+                transform: translateY(20px) rotate(180deg) scale(0.8); 
+                filter: drop-shadow(0 0 30px #ff4757);
+            }
+            100% { 
+                transform: translateY(40px) rotate(270deg) scale(0.5); 
+                filter: drop-shadow(0 0 40px #ff4757);
+                opacity: 0.3;
+            }
+        }
+
+        @keyframes explode {
+            0% { 
+                opacity: 0.3; 
+                transform: translateY(40px) rotate(270deg) scale(0.5);
+            }
+            50% { 
+                opacity: 0.8; 
+                transform: translateY(35px) rotate(315deg) scale(1.5);
+                filter: drop-shadow(0 0 50px #ff4757) brightness(2);
+            }
+            100% { 
+                opacity: 0; 
+                transform: translateY(50px) rotate(360deg) scale(0.1);
+                filter: drop-shadow(0 0 60px #ff4757) brightness(3);
+            }
+        }
+
+        @keyframes idle {
+            0%, 100% { 
+                transform: translateY(5px) rotate(0deg); 
+            }
+            50% { 
+                transform: translateY(-5px) rotate(3deg); 
+            }
+        }
+
+        @keyframes glow {
+            0% { 
+                filter: drop-shadow(0 0 20px #00ff88); 
+            }
+            100% { 
+                filter: drop-shadow(0 0 40px #00ff88) drop-shadow(0 0 60px #00ff88); 
+            }
+        }
+
+        @keyframes slideInNotification {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .header {
+                padding: 10px 15px;
+            }
+            
+            .multiplier {
+                font-size: 36px;
+            }
+            
+            .plane {
+                font-size: 50px;
+            }
+            
+            .betting-controls {
+                padding: 15px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <div><strong>Aviator</strong></div>
-    <div id="user-panel">Not connected</div>
-  </header>
+    <div class="game-container" id="gameContainer">
+        <!-- Connection Status -->
+        <div class="connection-status disconnected" id="connectionStatus">
+            🔴 Connecting...
+        </div>
 
-  <div class="container">
-    <div id="game-area">
-      <div id="plane">✈️</div>
-      <div id="explosion">💥</div>
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">✈️</div>
+                <div class="logo-text">AVIATOR</div>
+            </div>
+            <div class="user-info">
+                <div class="balance" id="balance">1000⭐</div>
+                <button class="menu-button" onclick="toggleMenu()" id="menuBtn">☰</button>
+            </div>
+        </div>
+
+        <!-- Game Area -->
+        <div class="game-area">
+            <div class="flight-display">
+                <div class="multiplier waiting" id="multiplier">1.00x</div>
+                <div class="plane waiting" id="plane">✈️</div>
+                <div class="status waiting" id="status">Connecting to server...</div>
+            </div>
+        </div>
+
+        <!-- Betting Controls -->
+        <div class="betting-controls">
+            <!-- Statistics -->
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-label">Total Bet</div>
+                    <div class="stat-value" id="totalBet">0⭐</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Total Win</div>
+                    <div class="stat-value" id="totalWin">0⭐</div>
+                </div>
+            </div>
+
+            <!-- History -->
+            <div class="history" id="history">
+                <div class="history-item low">1.2x</div>
+                <div class="history-item medium">3.4x</div>
+                <div class="history-item high">8.7x</div>
+                <div class="history-item low">1.8x</div>
+                <div class="history-item medium">2.9x</div>
+            </div>
+
+            <!-- Quick Bets -->
+            <div class="quick-bets">
+                <div class="quick-bet" onclick="setBet(10)">10⭐</div>
+                <div class="quick-bet" onclick="setBet(50)">50⭐</div>
+                <div class="quick-bet" onclick="setBet(100)">100⭐</div>
+                <div class="quick-bet" onclick="setBet(500)">500⭐</div>
+            </div>
+
+            <!-- Betting Section -->
+            <div class="bet-section">
+                <input type="number" class="bet-input" id="betAmount" placeholder="Bet Amount" value="100" min="10">
+                <button class="bet-btn" id="placeBet" onclick="placeBet()">Place Bet</button>
+            </div>
+
+            <!-- Cashout Button -->
+            <button class="cashout-btn" id="cashoutBtn" onclick="cashout()" disabled>Cash Out</button>
+        </div>
     </div>
 
-    <div id="multiplier">1.00x</div>
+    <script>
+        // Fixed Client-side JavaScript for public/index.html
+// Replace the entire script section with this:
 
-    <div class="panel">
-      <div class="card">
-        <div>Balance: <span id="balance">0</span></div>
-        <div style="margin-top:8px">
-          <input id="betAmount" type="number" placeholder="Bet amount" min="1" />
-          <button id="betBtn">Bet</button>
-        </div>
-        <div style="margin-top:8px">
-          <button id="cashoutBtn">Cashout</button>
-        </div>
-      </div>
+// Game variables
+let gameState = 'waiting';
+let currentMultiplier = 1.00;
+let playerBet = 0;
+let hasBet = false;
+let balance = 1000;
+let socket = null;
+let userTelegramId = Math.floor(Math.random() * 1000000000); // Demo user ID
+let history = [1.2, 3.4, 8.7, 1.8, 2.9];
+let totalBet = 0;
+let totalWin = 0;
 
-      <div class="card">
-        <h4>Withdraw</h4>
-        <input id="withdrawAmount" type="number" placeholder="Amount" />
-        <input id="withdrawRef" placeholder="Reference (acct/crypto)" />
-        <button id="withdrawBtn">Request Withdraw</button>
-      </div>
+// DOM elements
+const multiplierEl = document.getElementById('multiplier');
+const planeEl = document.getElementById('plane');
+const statusEl = document.getElementById('status');
+const betAmountEl = document.getElementById('betAmount');
+const placeBetBtn = document.getElementById('placeBet');
+const cashoutBtn = document.getElementById('cashoutBtn');
+const balanceEl = document.getElementById('balance');
+const totalBetEl = document.getElementById('totalBet');
+const totalWinEl = document.getElementById('totalWin');
+const historyEl = document.getElementById('history');
 
-      <div class="card">
-        <h4>Deposit</h4>
-        <input id="depositAmount" type="number" placeholder="Amount" />
-        <input id="depositRef" placeholder="Payment reference" />
-        <button id="depositBtn">Request Deposit</button>
-      </div>
+// Sound Management
+let soundEnabled = true;
+let sounds = {};
 
-      <div class="card">
-        <h4>History</h4>
-        <button id="loadHistory">Load</button>
-        <div id="historyArea" style="max-height:180px; overflow:auto;"></div>
-      </div>
-
-      <div class="card">
-        <h4>Leaderboard</h4>
-        <button id="loadLB">Load</button>
-        <div id="leaderboardArea"></div>
-      </div>
-    </div>
-
-    <h3 style="margin-top:18px">Game Log</h3>
-    <div id="log" style="background:#051022;padding:12px;border-radius:8px;max-height:220px;overflow:auto;"></div>
-  </div>
-
-  <script>
-    const socket = io();
-    let currentMultiplier = 1;
-    let hasActiveBet = false;
-    let user = { telegramId: null };
-    const log = document.getElementById('log');
-
-    function appendLog(s) { const el = document.createElement('div'); el.innerText = '[' + new Date().toLocaleTimeString() + '] ' + s; log.prepend(el); }
-
-    const plane = document.getElementById('plane');
-    const explosion = document.getElementById('explosion');
-    const multiplierEl = document.getElementById('multiplier');
-    const balanceEl = document.getElementById('balance');
-
-    function resetPlane() {
-      plane.style.display='block';
-      explosion.style.display='none';
-      plane.style.transform = 'translate(10px,220px)';
+function initSounds() {
+    if (typeof(AudioContext) !== "undefined" || typeof(webkitAudioContext) !== "undefined") {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Synthetic sounds using Web Audio API
+        sounds.takeoff = () => {
+            if (!soundEnabled) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.5);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        };
+        
+        sounds.crash = () => {
+            if (!soundEnabled) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.8);
+            oscillator.type = 'sawtooth';
+            
+            gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.8);
+        };
+        
+        sounds.win = () => {
+            if (!soundEnabled) return;
+            const notes = [523.25, 659.25, 783.99];
+            notes.forEach((freq, index) => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = freq;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.1);
+                gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + index * 0.1 + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + index * 0.1 + 0.3);
+                
+                oscillator.start(audioContext.currentTime + index * 0.1);
+                oscillator.stop(audioContext.currentTime + index * 0.1 + 0.3);
+            });
+        };
+        
+        sounds.bet = () => {
+            if (!soundEnabled) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'square';
+            
+            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        };
     }
+}
 
-    socket.on('connect', () => appendLog('Connected to server'));
-    socket.on('game:bettingPhase', (data) => {
-      appendLog('Betting phase started');
-      resetPlane();
-      multiplierEl.innerText = 'Place your bets';
-    });
-    socket.on('game:takeoff', (d) => {
-      appendLog('Takeoff!');
-    });
-    socket.on('game:multiplierUpdate', (d) => {
-      currentMultiplier = Number((d.multiplier || d).toFixed ? d.multiplier : d);
-      multiplierEl.innerText = currentMultiplier.toFixed(2) + 'x';
-      const progress = Math.min(1, (currentMultiplier - 1) / 10);
-      const x = 10 + progress * (window.innerWidth - 200);
-      const y = 220 - progress * 180;
-      plane.style.transform = `translate(${x}px, ${y}px)`;
-    });
-    socket.on('game:crashed', (d) => {
-      appendLog('Crashed at ' + (d.finalMultiplier || d.multiplier));
-      multiplierEl.innerText = '💥 Crashed at ' + (d.finalMultiplier || d.multiplier) + 'x';
-      plane.style.display='none';
-      explosion.style.display='block';
-      setTimeout(resetPlane, 2000);
-    });
-    socket.on('game:betPlaced', b => appendLog('Bet placed: ' + JSON.stringify(b)));
-    socket.on('game:cashOut', c => appendLog('Cashout: ' + JSON.stringify(c)));
-
-    async function api(path, method='GET', body) {
-      const opts = { method, headers: { 'Content-Type':'application/json' } };
-      if (body) opts.body = JSON.stringify(body);
-      const res = await fetch('/api/player' + path, opts);
-      return res.json();
+function playSound(soundName) {
+    if (sounds[soundName]) {
+        try {
+            sounds[soundName]();
+        } catch (e) {
+            console.log('Sound failed:', e);
+        }
     }
+}
 
-    if (!user.telegramId) {
-      const idPrompt = prompt('Enter your telegram id (for testing)', '');
-      if (idPrompt) {
-        user.telegramId = Number(idPrompt);
-        document.getElementById('user-panel').innerText = 'You: ' + user.telegramId;
-        api('/register', 'POST', { telegramId: user.telegramId, username: 'webuser' }).then(r => {
-          if (r.ok) {
-            balanceEl.innerText = r.user.balance;
-            appendLog('Registered locally');
-          } else {
-            appendLog('Register failed');
-          }
+// Initialize WebSocket connection
+function initSocketConnection() {
+    console.log('🔌 Connecting to server...');
+    
+    try {
+        socket = io();
+        
+        socket.on('connect', () => {
+            console.log('✅ Connected to server');
+            showNotification('Connected to game server', 'success');
+            
+            // Register user
+            registerUser();
         });
-      }
+
+        socket.on('disconnect', () => {
+            console.log('❌ Disconnected from server');
+            showNotification('Connection lost - reconnecting...', 'error');
+        });
+
+        // Game state events
+        socket.on('game:bettingPhase', (data) => {
+            console.log('🎯 Betting phase started');
+            gameState = 'betting';
+            currentMultiplier = 1.00;
+            updateDisplay();
+            showNotification('Place your bets!', 'info');
+        });
+
+        socket.on('game:takeoff', (data) => {
+            console.log('🛫 Plane taking off');
+            gameState = 'flying';
+            currentMultiplier = data.multiplier || 1.00;
+            updateDisplay();
+            playSound('takeoff');
+            showNotification('Plane taking off!', 'info');
+        });
+
+        socket.on('game:multiplierUpdate', (data) => {
+            currentMultiplier = data.multiplier;
+            updateDisplay();
+        });
+
+        socket.on('game:crashed', (data) => {
+            console.log(`💥 Game crashed at ${data.crashPoint}x`);
+            gameState = 'crashed';
+            currentMultiplier = data.crashPoint;
+            
+            // Add to history
+            history.unshift(data.crashPoint);
+            if (history.length > 10) history.pop();
+            updateHistory();
+            
+            // Handle player loss
+            if (hasBet) {
+                showNotification(`💥 Plane crashed at ${data.crashPoint.toFixed(2)}x - You lost ${playerBet}⭐`, 'error');
+                totalBet += playerBet;
+                playerBet = 0;
+                hasBet = false;
+                updateStats();
+            }
+            
+            updateDisplay();
+            playSound('crash');
+            createExplosionEffect();
+        });
+
+        socket.on('game:betPlaced', (data) => {
+            console.log(`💰 ${data.firstName} placed bet: ${data.amount}⭐`);
+        });
+
+        socket.on('game:cashOut', (data) => {
+            console.log(`🎯 ${data.firstName} cashed out: ${data.payout}⭐ at ${data.multiplier}x`);
+        });
+
+        // Error handling
+        socket.on('connect_error', (error) => {
+            console.error('Connection error:', error);
+            showNotification('Connection failed', 'error');
+        });
+
+    } catch (error) {
+        console.error('Socket initialization failed:', error);
+        showNotification('Failed to connect to server', 'error');
     }
+}
 
-    document.getElementById('betBtn').addEventListener('click', async () => {
-      const amount = Number(document.getElementById('betAmount').value);
-      if (!amount || amount <= 0) return alert('Enter amount');
-      const r = await api('/bet', 'POST', { telegramId: user.telegramId, amount });
-      if (!r.ok) return alert('Bet failed: ' + (r.error || ''));
-      balanceEl.innerText = r.balance;
-      hasActiveBet = true;
-      socket.emit('placeBet', { telegramId: user.telegramId, amount });
-      appendLog('Bet placed: ' + amount);
-    });
+// Register user with server
+async function registerUser() {
+    try {
+        const response = await fetch('/api/player/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                telegramId: userTelegramId,
+                username: `player${userTelegramId}`,
+                firstName: 'Demo',
+                lastName: 'Player'
+            })
+        });
 
-    document.getElementById('cashoutBtn').addEventListener('click', async () => {
-      if (!hasActiveBet) return alert('No active bet');
-      socket.emit('cashOut', { telegramId: user.telegramId });
-      appendLog('Cashout requested');
-    });
+        const data = await response.json();
+        if (data.success) {
+            balance = data.user.balance;
+            updateDisplay();
+            console.log('✅ User registered:', data.user);
+        }
+    } catch (error) {
+        console.error('Registration failed:', error);
+    }
+}
 
-    document.getElementById('withdrawBtn').addEventListener('click', async () => {
-      const amount = Number(document.getElementById('withdrawAmount').value);
-      const ref = document.getElementById('withdrawRef').value || '';
-      if (!amount) return alert('Enter amount');
-      const r = await api('/withdraw', 'POST', { telegramId: user.telegramId, amount, reference: ref });
-      if (!r.ok) return alert('Withdraw failed: ' + (r.error||''));
-      alert('Withdraw requested');
-      appendLog('Withdraw requested: ' + amount);
-    });
+// Game functions
+function setBet(amount) {
+    if (gameState === 'waiting' || gameState === 'betting') {
+        betAmountEl.value = amount;
+        playSound('bet');
+        
+        // Animate button
+        event.target.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            event.target.style.transform = 'scale(1)';
+        }, 150);
+    }
+}
 
-    document.getElementById('depositBtn').addEventListener('click', async () => {
-      const amount = Number(document.getElementById('depositAmount').value);
-      const ref = document.getElementById('depositRef').value || '';
-      if (!amount) return alert('Enter amount');
-      const r = await api('/deposit', 'POST', { telegramId: user.telegramId, amount, reference: ref });
-      if (!r.ok) return alert('Deposit failed: ' + (r.error||''));
-      alert('Deposit requested for admin approval');
-      appendLog('Deposit requested: ' + amount);
-    });
+async function placeBet() {
+    const betAmount = parseInt(betAmountEl.value);
+    
+    if (gameState !== 'betting') {
+        showNotification('Wait for betting phase!', 'warning');
+        return;
+    }
+    
+    if (betAmount < 10 || betAmount > balance) {
+        showNotification('Invalid bet amount!', 'error');
+        return;
+    }
+    
+    if (hasBet) {
+        showNotification('You already have a bet placed!', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/player/bet', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                telegramId: userTelegramId,
+                amount: betAmount
+            })
+        });
 
-    document.getElementById('loadHistory').addEventListener('click', async () => {
-      const r = await api('/history/' + user.telegramId, 'GET');
-      if (!r.ok) return alert('Failed to load history');
-      const area = document.getElementById('historyArea');
-      area.innerHTML = '<pre>' + JSON.stringify(r.history, null, 2) + '</pre>';
-    });
+        const data = await response.json();
+        if (data.success) {
+            playerBet = betAmount;
+            balance = data.newBalance;
+            hasBet = true;
+            
+            playSound('bet');
+            animateBetPlacement();
+            updateDisplay();
+            showNotification(`Bet placed: ${betAmount}⭐`, 'success');
+        } else {
+            showNotification(data.error || 'Bet failed', 'error');
+        }
+    } catch (error) {
+        console.error('Bet error:', error);
+        showNotification('Bet failed', 'error');
+    }
+}
 
-    document.getElementById('loadLB').addEventListener('click', async () => {
-      const r = await api('/leaderboard', 'GET');
-      if (!r.ok) return alert('Failed to load leaderboard');
-      const area = document.getElementById('leaderboardArea');
-      area.innerHTML = '<pre>' + JSON.stringify(r.leaderboard, null, 2) + '</pre>';
+async function cashout() {
+    if (gameState !== 'flying' || !hasBet) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/player/cashout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                telegramId: userTelegramId
+            })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            const winAmount = data.payout;
+            balance = data.newBalance;
+            totalBet += playerBet;
+            totalWin += winAmount;
+            
+            playSound('win');
+            animateWin();
+            
+            showNotification(`🎉 Won ${winAmount}⭐ at ${data.multiplier.toFixed(2)}x!`, 'success');
+            
+            playerBet = 0;
+            hasBet = false;
+            updateDisplay();
+            updateStats();
+        } else {
+            showNotification(data.error || 'Cashout failed', 'error');
+        }
+    } catch (error) {
+        console.error('Cashout error:', error);
+        showNotification('Cashout failed', 'error');
+    }
+}
+
+function animateBetPlacement() {
+    placeBetBtn.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+        placeBetBtn.style.transform = 'scale(1)';
+    }, 150);
+}
+
+function animateWin() {
+    const flashOverlay = document.createElement('div');
+    flashOverlay.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, rgba(0, 255, 136, 0.3), rgba(0, 212, 255, 0.3));
+        pointer-events: none;
+        z-index: 5;
+        animation: winFlash 0.6s ease-out;
+    `;
+    
+    document.querySelector('.flight-display').appendChild(flashOverlay);
+    
+    multiplierEl.style.transform = 'scale(1.2)';
+    multiplierEl.style.textShadow = '0 0 30px #00ff88';
+    
+    setTimeout(() => {
+        multiplierEl.style.transform = 'scale(1)';
+        multiplierEl.style.textShadow = '0 0 20px currentColor';
+        flashOverlay.remove();
+    }, 600);
+}
+
+function createExplosionEffect() {
+    const explosionContainer = document.createElement('div');
+    explosionContainer.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 1px;
+        height: 1px;
+        pointer-events: none;
+        z-index: 10;
+    `;
+    
+    document.querySelector('.flight-display').appendChild(explosionContainer);
+    
+    for (let i = 0; i < 15; i++) {
+        const particle = document.createElement('div');
+        const angle = (i / 15) * Math.PI * 2;
+        const distance = 30 + Math.random() * 50;
+        const size = 3 + Math.random() * 5;
+        
+        particle.style.cssText = `
+            position: absolute;
+            width: ${size}px;
+            height: ${size}px;
+            background: #ff4757;
+            border-radius: 50%;
+            animation: explodeParticle 1s ease-out forwards;
+            transform: translate(-50%, -50%);
+        `;
+        
+        particle.style.setProperty('--end-x', Math.cos(angle) * distance + 'px');
+        particle.style.setProperty('--end-y', Math.sin(angle) * distance + 'px');
+        
+        explosionContainer.appendChild(particle);
+    }
+    
+    if (!document.getElementById('explosion-keyframes')) {
+        const style = document.createElement('style');
+        style.id = 'explosion-keyframes';
+        style.textContent = `
+            @keyframes explodeParticle {
+                0% {
+                    transform: translate(-50%, -50%) scale(1);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translate(calc(-50% + var(--end-x)), calc(-50% + var(--end-y))) scale(0);
+                    opacity: 0;
+                }
+            }
+            @keyframes winFlash {
+                0% { opacity: 0; }
+                50% { opacity: 1; }
+                100% { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    setTimeout(() => {
+        explosionContainer.remove();
+    }, 1000);
+}
+
+function updateDisplay() {
+    // Multiplier
+    multiplierEl.textContent = currentMultiplier.toFixed(2) + 'x';
+    multiplierEl.className = `multiplier ${gameState}`;
+    
+    // Plane
+    planeEl.className = `plane ${gameState}`;
+    
+    // Status
+    let statusText = '';
+    switch (gameState) {
+        case 'waiting':
+            statusText = 'Waiting for next flight...';
+            break;
+        case 'betting':
+            statusText = 'Place your bets!';
+            break;
+        case 'flying':
+            statusText = 'Flying... Cash out anytime!';
+            break;
+        case 'crashed':
+            statusText = `Crashed at ${currentMultiplier.toFixed(2)}x`;
+            break;
+    }
+    statusEl.textContent = statusText;
+    statusEl.className = `status ${gameState}`;
+    
+    // Buttons
+    placeBetBtn.disabled = gameState !== 'betting' || hasBet;
+    cashoutBtn.disabled = gameState !== 'flying' || !hasBet;
+    
+    // Update cashout button text
+    if (hasBet && gameState === 'flying') {
+        const potentialWin = Math.floor(playerBet * currentMultiplier);
+        cashoutBtn.textContent = `Cash Out ${potentialWin}⭐`;
+        cashoutBtn.classList.remove('inactive');
+    } else {
+        cashoutBtn.textContent = 'Cash Out';
+        if (!hasBet || gameState !== 'flying') {
+            cashoutBtn.classList.add('inactive');
+        }
+    }
+    
+    // Balance
+    balanceEl.textContent = balance + '⭐';
+}
+
+function updateStats() {
+    totalBetEl.textContent = totalBet + '⭐';
+    totalWinEl.textContent = totalWin + '⭐';
+}
+
+function updateHistory() {
+    historyEl.innerHTML = '';
+    history.forEach(mult => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.textContent = mult.toFixed(2) + 'x';
+        
+        if (mult < 2) {
+            item.classList.add('low');
+        } else if (mult < 5) {
+            item.classList.add('medium');
+        } else {
+            item.classList.add('high');
+        }
+        
+        historyEl.appendChild(item);
     });
-  </script>
+}
+
+// Particle system
+function createParticle() {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 4 + 's';
+    particle.style.animationDuration = (2 + Math.random() * 2) + 's';
+    
+    const colors = ['#00ff88', '#00d4ff', '#ffc107'];
+    particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+    
+    document.getElementById('particles').appendChild(particle);
+    
+    setTimeout(() => {
+        if (particle.parentElement) {
+            particle.remove();
+        }
+    }, 6000);
+}
+
+function startParticleSystem() {
+    setInterval(() => {
+        if (gameState === 'flying') {
+            createParticle();
+        }
+    }, 800);
+}
+
+// Notification system
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    const colors = {
+        success: 'linear-gradient(135deg, #00ff88, #00cc6a)',
+        error: 'linear-gradient(135deg, #ff4757, #c44569)',
+        warning: 'linear-gradient(135deg, #ffc107, #f39c12)',
+        info: 'linear-gradient(135deg, #17a2b8, #138496)'
+    };
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${colors[type] || colors.info};
+        color: ${type === 'warning' ? 'black' : 'white'};
+        padding: 15px 20px;
+        border-radius: 12px;
+        font-weight: 600;
+        z-index: 3000;
+        animation: slideInNotification 0.3s ease;
+        max-width: 300px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        font-size: 14px;
+    `;
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideInNotification 0.3s ease reverse';
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 3000);
+}
+
+// Mobile viewport handling
+function setVH() {
+    let vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+
+// Menu functions
+function toggleMenu() {
+    const menu = document.getElementById('navMenu');
+    const overlay = document.getElementById('navOverlay');
+    menu.classList.toggle('active');
+    overlay.classList.toggle('active');
+}
+
+function closeMenu() {
+    document.getElementById('navMenu').classList.remove('active');
+    document.getElementById('navOverlay').classList.remove('active');
+}
+
+function openModal(modalId) {
+    closeMenu();
+    document.getElementById(modalId).classList.add('active');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+}
+
+// Initialize everything
+function init() {
+    console.log('🚀 Initializing Aviator game...');
+    
+    // Initialize sounds
+    initSounds();
+    
+    // Start particle system
+    startParticleSystem();
+    
+    // Set mobile viewport
+    setVH();
+    window.addEventListener('resize', setVH);
+    
+    // Initialize display
+    updateDisplay();
+    updateHistory();
+    updateStats();
+    
+    // Connect to server
+    initSocketConnection();
+    
+    console.log('✅ Game initialized!');
+}
+
+// Start the game when page loads
+document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>

@@ -1,81 +1,3036 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Aviator Admin</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    body { font-family: Arial, sans-serif; background:#071022; color:#fff; margin:0; padding:16px; }
-    .panel { background:#0b1b2b; padding:12px; border-radius:8px; margin-bottom:12px; }
-    button{ padding:8px; margin-right:6px; }
-    table { width:100%; color:#fff; border-collapse:collapse;}
-    td,th{ padding:8px; border-bottom:1px solid #133246;}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1f2e">
+    <title>Aviator Admin Dashboard - Complete Management System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+            color: white;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .login-form {
+            background: rgba(26, 31, 46, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 20px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 900;
+            color: #00ff88;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+
+        .login-subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            color: #00ff88;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #00ff88;
+            box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.3);
+        }
+
+        .error-message {
+            color: #ff4757;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(26, 31, 46, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-icon {
+            font-size: 32px;
+        }
+
+        .header-text h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .header-text p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            background: rgba(255, 71, 87, 0.2);
+            border: 1px solid #ff4757;
+            color: #ff4757;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            background: #ff4757;
+            color: white;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .dashboard-card {
+            background: rgba(26, 31, 46, 0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            border-color: #00d4ff;
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .card-icon {
+            font-size: 32px;
+            opacity: 0.8;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .card-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #00ff88;
+            margin-bottom: 8px;
+        }
+
+        .card-subtitle {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+
+        /* Real-time Status Bar */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .status-online {
+            color: #00ff88;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .notification-bell {
+            cursor: pointer;
+            color: #ffc107;
+            animation: ring 3s infinite;
+        }
+
+        @keyframes ring {
+            0%, 100% { transform: rotate(0deg); }
+            10%, 30% { transform: rotate(-10deg); }
+            20% { transform: rotate(10deg); }
+        }
+
+        /* Action Cards */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .action-card {
+            background: linear-gradient(135deg, rgba(26, 31, 46, 0.8) 0%, rgba(42, 52, 65, 0.8) 100%);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-card.primary:hover {
+            border-color: #00d4ff;
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .action-card.success:hover {
+            border-color: #00ff88;
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+        }
+
+        .action-card.warning:hover {
+            border-color: #ffc107;
+            box-shadow: 0 10px 30px rgba(255, 193, 7, 0.3);
+        }
+
+        .action-card.danger:hover {
+            border-color: #ff4757;
+            box-shadow: 0 10px 30px rgba(255, 71, 87, 0.3);
+        }
+
+        .action-card.info:hover {
+            border-color: #17a2b8;
+            box-shadow: 0 10px 30px rgba(23, 162, 184, 0.3);
+        }
+
+        .action-card.secondary:hover {
+            border-color: #6c757d;
+            box-shadow: 0 10px 30px rgba(108, 117, 125, 0.3);
+        }
+
+        .action-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .action-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .action-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .action-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: rgba(26, 31, 46, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-content-large {
+            max-width: 900px;
+            width: 95%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .modal-close:hover {
+            opacity: 1;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        /* Enhanced Modal Styles */
+        .modal-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .modal-tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .modal-tab.active {
+            color: #00d4ff;
+            border-bottom-color: #00d4ff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Lists */
+        .list-item {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .list-item:hover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .list-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .list-item-title {
+            font-weight: 600;
+        }
+
+        .list-item-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .status-approved {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .status-rejected {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+        }
+
+        .list-item-details {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .list-item-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+            margin: 0 2px;
+        }
+
+        .btn-success {
+            background: #00ff88;
+            color: black;
+        }
+
+        .btn-success:hover {
+            background: #00cc66;
+        }
+
+        .btn-danger {
+            background: #ff4757;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ff3742;
+        }
+
+        .btn-primary {
+            background: #00d4ff;
+            color: black;
+        }
+
+        .btn-primary:hover {
+            background: #00b8e6;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .btn-warning:hover {
+            background: #e6ac00;
+        }
+
+        /* Forms */
+        .form-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-col {
+            flex: 1;
+        }
+
+        .form-textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+
+        /* Live Data Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-table th {
+            background: rgba(0, 0, 0, 0.3);
+            font-weight: 600;
+            color: #00d4ff;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        /* Progress Bars */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* Real-time Charts */
+        .chart-container {
+            height: 200px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Status Indicators */
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-indicator.online {
+            background: #00ff88;
+            box-shadow: 0 0 6px #00ff88;
+        }
+
+        .status-indicator.vip {
+            background: #ffc107;
+            box-shadow: 0 0 6px #ffc107;
+        }
+
+        .status-indicator.offline {
+            background: #6c757d;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-badge.online {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .status-badge.vip {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .status-badge.new {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+        }
+
+        /* Notification System */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(26, 31, 46, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 16px 20px;
+            border-left: 4px solid #00d4ff;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            max-width: 350px;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .notification-body {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .notification-time {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 8px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 20px;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+
+            .status-bar {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .dashboard-card, .action-card {
+            animation: slideUp 0.5s ease forwards;
+        }
+
+        .dashboard-card:nth-child(2) { animation-delay: 0.1s; }
+        .dashboard-card:nth-child(3) { animation-delay: 0.2s; }
+        .dashboard-card:nth-child(4) { animation-delay: 0.3s; }
+
+        /* Hidden class */
+        .hidden {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
-  <h1>Admin Dashboard</h1>
-  <div class="panel">
-    <label>Admin Token: <input id="token" style="width:60%" /></label>
-    <button onclick="loadUsers()">Load Users</button>
-    <button onclick="loadWithdraws()">Withdraws</button>
-    <button onclick="loadDeposits()">Deposits</button>
-    <button onclick="loadTransactions()">Transactions</button>
-    <button onclick="loadRounds()">Rounds</button>
-  </div>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-form">
+            <div class="login-title">✈️ AVIATOR</div>
+            <div class="login-subtitle">Admin Dashboard Access</div>
+            
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input type="text" id="username" class="form-input" placeholder="Enter username" autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input type="password" id="password" class="form-input" placeholder="Enter password" autocomplete="current-password">
+            </div>
+            
+            <button class="login-btn" id="loginBtn" onclick="login()">
+                <span class="login-text">Login</span>
+            </button>
+            
+            <div id="loginError" class="error-message"></div>
+        </div>
+    </div>
 
-  <div id="content"></div>
+    <!-- Dashboard -->
+    <div id="dashboard" class="hidden">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-title">
+                    <div class="header-icon">🎮</div>
+                    <div class="header-text">
+                        <h1>Admin Dashboard</h1>
+                        <p>Complete Aviator Game Management System</p>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
 
-  <script>
-    function tokenHeader() {
-      const t = document.getElementById('token').value;
-      return { Authorization: 'Bearer ' + t, 'Content-Type':'application/json' };
-    }
+        <div class="container">
+            <!-- Real-time Status Bar -->
+            <div class="status-bar" id="statusBar">
+                <div class="status-item">
+                    <i class="fas fa-circle status-online"></i>
+                    <span>Server Online</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-gamepad"></i>
+                    <span id="gameStatus">Game Running</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-users"></i>
+                    <span id="livePlayerCount">247 Online</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-bell notification-bell" onclick="toggleNotifications()"></i>
+                    <span id="notificationCount">3 New</span>
+                </div>
+            </div>
 
-    async function loadUsers() {
-      const res = await fetch('/api/admin/users', { headers: tokenHeader() });
-      const j = await res.json();
-      document.getElementById('content').innerHTML = '<pre>' + JSON.stringify(j.users || j, null, 2) + '</pre>';
-    }
-    async function loadWithdraws() {
-      const res = await fetch('/api/admin/withdraws', { headers: tokenHeader() });
-      const j = await res.json();
-      const rows = (j.requests || []).map(r => `<div>${r._id} - ${r.userId?.username||r.userId?.telegramId} - ${r.amount} - ${r.status} 
-        ${r.status==='pending' ? `<button onclick="approve('${r._id}')">Approve</button><button onclick="deny('${r._id}')">Deny</button>` : ''}</div>`).join('');
-      document.getElementById('content').innerHTML = rows || 'no requests';
-    }
-    async function approve(id) {
-      await fetch('/api/admin/withdraw/' + id + '/approve', { method: 'POST', headers: tokenHeader() });
-      loadWithdraws();
-    }
-    async function deny(id) {
-      await fetch('/api/admin/withdraw/' + id + '/deny', { method: 'POST', headers: tokenHeader() });
-      loadWithdraws();
-    }
-    async function loadDeposits() {
-      const res = await fetch('/api/admin/deposits', { headers: tokenHeader() });
-      const j = await res.json();
-      const rows = (j.requests || []).map(r => `<div>${r._id} - ${r.userId?.username||r.userId?.telegramId} - ${r.amount} - ${r.status} 
-        ${r.status==='pending' ? `<button onclick="approveDep('${r._id}')">Approve</button><button onclick="denyDep('${r._id}')">Deny</button>` : ''}</div>`).join('');
-      document.getElementById('content').innerHTML = rows || 'no deposits';
-    }
-    async function approveDep(id) {
-      await fetch('/api/admin/deposit/' + id + '/approve', { method: 'POST', headers: tokenHeader() });
-      loadDeposits();
-    }
-    async function denyDep(id) {
-      await fetch('/api/admin/deposit/' + id + '/deny', { method: 'POST', headers: tokenHeader() });
-      loadDeposits();
-    }
-    async function loadTransactions() {
-      const res = await fetch('/api/admin/transactions', { headers: tokenHeader() });
-      const j = await res.json();
-      document.getElementById('content').innerHTML = '<pre>' + JSON.stringify(j.transactions || j, null, 2) + '</pre>';
-    }
-    async function loadRounds() {
-      const res = await fetch('/api/admin/rounds', { headers: tokenHeader() });
-      const j = await res.json();
-      document.getElementById('content').innerHTML = '<pre>' + JSON.stringify(j.rounds || j, null, 2) + '</pre>';
-    }
-  </script>
+            <!-- Statistics Cards -->
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon"><i class="fas fa-users"></i></div>
+                        <div class="card-title">Active Players</div>
+                    </div>
+                    <div class="card-value" id="activePlayers">247</div>
+                    <div class="card-subtitle">Currently online</div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon"><i class="fas fa-gamepad"></i></div>
+                        <div class="card-title">Games Today</div>
+                    </div>
+                    <div class="card-value" id="gamesToday">1,543</div>
+                    <div class="card-subtitle">Rounds completed</div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="card-title">Revenue</div>
+                    </div>
+                    <div class="card-value" id="revenue">$12,847</div>
+                    <div class="card-subtitle">Today's earnings</div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="card-title">Avg Multiplier</div>
+                    </div>
+                    <div class="card-value" id="avgMultiplier">2.34x</div>
+                    <div class="card-subtitle">Last 24 hours</div>
+                </div>
+            </div>
+
+            <!-- Admin Actions -->
+            <h2 style="margin-bottom: 20px; font-size: 24px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-tools"></i> Complete Management Center
+            </h2>
+            <div class="actions-grid">
+                <!-- Financial Management -->
+                <div class="action-card primary" onclick="openModal('withdrawalsModal')">
+                    <div class="action-icon"><i class="fas fa-money-bill-wave"></i></div>
+                    <div class="action-title">Withdrawal Approval</div>
+                    <div class="action-desc">Review and approve pending withdrawals</div>
+                    <div class="action-badge" id="pendingWithdrawals">5 Pending</div>
+                </div>
+
+                <div class="action-card success" onclick="openModal('depositsModal')">
+                    <div class="action-icon"><i class="fas fa-coins"></i></div>
+                    <div class="action-title">Deposit Management</div>
+                    <div class="action-desc">Monitor and manage user deposits</div>
+                    <div class="action-badge" id="todayDeposits">23 Today</div>
+                </div>
+
+                <!-- Player Management -->
+                <div class="action-card warning" onclick="openModal('playersModal')">
+                    <div class="action-icon"><i class="fas fa-users-cog"></i></div>
+                    <div class="action-title">Player Management</div>
+                    <div class="action-desc">Comprehensive user account control</div>
+                    <div class="action-badge" id="activePlayersCount">247 Active</div>
+                </div>
+
+                <div class="action-card info" onclick="openModal('playerAnalyticsModal')">
+                    <div class="action-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="action-title">Player Analytics</div>
+                    <div class="action-desc">Detailed player behavior insights</div>
+                    <div class="action-badge">Live Data</div>
+                </div>
+
+                <!-- Game Control -->
+                <div class="action-card danger" onclick="openModal('gameControlModal')">
+                    <div class="action-icon"><i class="fas fa-gamepad"></i></div>
+                    <div class="action-title">Game Control Center</div>
+                    <div class="action-desc">Real-time game configuration</div>
+                    <div class="action-badge" id="gameRounds">Round #1,543</div>
+                </div>
+
+                <div class="action-card secondary" onclick="openModal('gameHistoryModal')">
+                    <div class="action-icon"><i class="fas fa-history"></i></div>
+                    <div class="action-title">Game History</div>
+                    <div class="action-desc">Complete game round history</div>
+                    <div class="action-badge">Live Feed</div>
+                </div>
+
+                <!-- Support & Communication -->
+                <div class="action-card primary" onclick="openModal('supportModal')">
+                    <div class="action-icon"><i class="fas fa-headset"></i></div>
+                    <div class="action-title">Support Center</div>
+                    <div class="action-desc">Handle tickets and live chat</div>
+                    <div class="action-badge" id="openTickets">12 Open</div>
+                </div>
+
+                <div class="action-card info" onclick="openModal('notificationsModal')">
+                    <div class="action-icon"><i class="fas fa-bullhorn"></i></div>
+                    <div class="action-title">Notifications</div>
+                    <div class="action-desc">Send announcements to players</div>
+                    <div class="action-badge">Broadcast</div>
+                </div>
+
+                <!-- Analytics & Reports -->
+                <div class="action-card success" onclick="openModal('analyticsModal')">
+                    <div class="action-icon"><i class="fas fa-chart-pie"></i></div>
+                    <div class="action-title">Advanced Analytics</div>
+                    <div class="action-desc">Comprehensive platform insights</div>
+                    <div class="action-badge">Real-time</div>
+                </div>
+
+                <!-- Security & Monitoring -->
+                <div class="action-card warning" onclick="openModal('securityModal')">
+                    <div class="action-icon"><i class="fas fa-shield-alt"></i></div>
+                    <div class="action-title">Security Center</div>
+                    <div class="action-desc">Monitor suspicious activities</div>
+                    <div class="action-badge" id="securityAlerts">2 Alerts</div>
+                </div>
+
+                <div class="action-card secondary" onclick="openModal('auditLogModal')">
+                    <div class="action-icon"><i class="fas fa-clipboard-list"></i></div>
+                    <div class="action-title">Audit Logs</div>
+                    <div class="action-desc">Complete activity tracking</div>
+                    <div class="action-badge">Live Log</div>
+                </div>
+
+                <!-- Star Management -->
+                <div class="action-card warning" onclick="openModal('starManagementModal')">
+                    <div class="action-icon"><i class="fas fa-star"></i></div>
+                    <div class="action-title">Star Management</div>
+                    <div class="action-desc">Add bonus stars & marketing rewards</div>
+                    <div class="action-badge" id="totalStars">⭐ 245K</div>
+                </div>
+
+                <div class="action-card info" onclick="openModal('starTransactionsModal')">
+                    <div class="action-icon"><i class="fas fa-exchange-alt"></i></div>
+                    <div class="action-title">Star Transactions</div>
+                    <div class="action-desc">Monitor deposits & withdrawals</div>
+                    <div class="action-badge" id="pendingStarTx">8 Pending</div>
+                </div>
+
+                <!-- Fraud Protection -->
+                <div class="action-card danger" onclick="openModal('fraudProtectionModal')">
+                    <div class="action-icon"><i class="fas fa-shield-virus"></i></div>
+                    <div class="action-title">Fraud Protection</div>
+                    <div class="action-desc">Advanced anti-fraud & spam detection</div>
+                    <div class="action-badge" id="fraudAlerts">3 Alerts</div>
+                </div>
+
+                <!-- Enhanced Support -->
+                <div class="action-card success" onclick="openModal('ticketSystemModal')">
+                    <div class="action-icon"><i class="fas fa-ticket-alt"></i></div>
+                    <div class="action-title">Support Tickets</div>
+                    <div class="action-desc">Advanced ticket management system</div>
+                    <div class="action-badge" id="activeTickets">15 Active</div>
+                </div>
+
+                <!-- System Management -->
+                <div class="action-card secondary" onclick="openModal('systemModal')">
+                    <div class="action-icon"><i class="fas fa-server"></i></div>
+                    <div class="action-title">System Control</div>
+                    <div class="action-desc">Server and system management</div>
+                    <div class="action-badge" id="systemHealth">Healthy</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Modals -->
+    
+    <!-- Star Management Modal -->
+    <div id="starManagementModal" class="modal">
+        <div class="modal-content modal-content-large">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-star"></i> Star Management Center</h3>
+                <button class="modal-close" onclick="closeModal('starManagementModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-tabs">
+                    <button class="modal-tab active" onclick="switchTab('add-stars')">Add Stars</button>
+                    <button class="modal-tab" onclick="switchTab('bulk-bonus')">Bulk Bonus</button>
+                    <button class="modal-tab" onclick="switchTab('marketing')">Marketing Rewards</button>
+                    <button class="modal-tab" onclick="switchTab('star-history')">History</button>
+                </div>
+
+                <div id="add-stars" class="tab-content active">
+                    <h4 style="margin-bottom: 20px;">Add Stars to Player</h4>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">Player Username/ID</label>
+                            <input type="text" class="form-input" placeholder="@username or Player ID" id="targetPlayer">
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Star Amount</label>
+                            <input type="number" class="form-input" placeholder="Amount of stars" id="starAmount" min="1">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">Reason/Category</label>
+                            <select class="form-select" id="bonusReason">
+                                <option value="welcome">Welcome Bonus</option>
+                                <option value="loyalty">Loyalty Reward</option>
+                                <option value="compensation">Compensation</option>
+                                <option value="marketing">Marketing Campaign</option>
+                                <option value="vip">VIP Bonus</option>
+                                <option value="referral">Referral Reward</option>
+                                <option value="admin">Admin Adjustment</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Bonus Type</label>
+                            <select class="form-select" id="bonusType">
+                                <option value="instant">Instant Credit</option>
+                                <option value="locked">Locked (Requires Wagering)</option>
+                                <option value="daily">Daily Release</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Notes/Description</label>
+                        <textarea class="form-textarea" placeholder="Add notes about this bonus..." id="bonusNotes"></textarea>
+                    </div>
+
+                    <div class="list-item-actions">
+                        <button class="btn btn-success" onclick="addStarsToPlayer()">
+                            <i class="fas fa-plus"></i> Add Stars
+                        </button>
+                        <button class="btn btn-primary" onclick="previewBonus()">
+                            <i class="fas fa-eye"></i> Preview
+                        </button>
+                    </div>
+                </div>
+
+                <div id="bulk-bonus" class="tab-content">
+                    <h4 style="margin-bottom: 20px;">Bulk Star Distribution</h4>
+                    
+                    <div class="dashboard-grid" style="margin-bottom: 20px;">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon"><i class="fas fa-users"></i></div>
+                                <div class="card-title">Target Players</div>
+                            </div>
+                            <div class="card-value" id="bulkTargetCount">0</div>
+                            <div class="card-subtitle">Selected for bonus</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon"><i class="fas fa-calculator"></i></div>
+                                <div class="card-title">Total Cost</div>
+                            </div>
+                            <div class="card-value" id="bulkTotalCost">⭐ 0</div>
+                            <div class="card-subtitle">Stars to distribute</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">Target Group</label>
+                            <select class="form-select" id="bulkTarget" onchange="updateBulkPreview()">
+                                <option value="all">All Active Players</option>
+                                <option value="vip">VIP Players Only</option>
+                                <option value="new">New Players (Last 7 days)</option>
+                                <option value="loyal">Loyal Players (90+ days)</option>
+                                <option value="inactive">Inactive Players</option>
+                                <option value="custom">Custom List</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Stars per Player</label>
+                            <input type="number" class="form-input" placeholder="Stars each" id="bulkStarAmount" min="1" onchange="updateBulkPreview()">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">Campaign Name</label>
+                            <input type="text" class="form-input" placeholder="e.g., Weekend Bonus 2024" id="campaignName">
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Schedule</label>
+                            <select class="form-select" id="bulkSchedule">
+                                <option value="immediate">Send Immediately</option>
+                                <option value="schedule">Schedule for Later</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="list-item-actions">
+                        <button class="btn btn-warning" onclick="previewBulkBonus()">
+                            <i class="fas fa-eye"></i> Preview Campaign
+                        </button>
+                        <button class="btn btn-success" onclick="executeBulkBonus()">
+                            <i class="fas fa-rocket"></i> Launch Campaign
+                        </button>
+                    </div>
+                </div>
+
+                <div id="marketing" class="tab-content">
+                    <h4 style="margin-bottom: 20px;">Marketing Reward Programs</h4>
+                    
+                    <!-- Active Campaigns -->
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">Daily Login Bonus</div>
+                            <div class="list-item-status status-approved">Active</div>
+                        </div>
+                        <div class="list-item-details">
+                            Reward: ⭐ 50 stars daily<br>
+                            Participants: 1,247 players<br>
+                            Total Distributed: ⭐ 62,350
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-primary" onclick="editCampaign('daily-login')">Edit</button>
+                            <button class="btn btn-danger" onclick="pauseCampaign('daily-login')">Pause</button>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">Referral Program</div>
+                            <div class="list-item-status status-approved">Active</div>
+                        </div>
+                        <div class="list-item-details">
+                            Reward: ⭐ 500 stars per referral<br>
+                            Active Referrers: 89 players<br>
+                            Pending Rewards: ⭐ 12,500
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-primary" onclick="editCampaign('referral')">Edit</button>
+                            <button class="btn btn-success" onclick="processPendingRewards('referral')">Process Pending</button>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">VIP Tier Bonuses</div>
+                            <div class="list-item-status status-approved">Active</div>
+                        </div>
+                        <div class="list-item-details">
+                            Bronze: ⭐ 100/week, Silver: ⭐ 250/week, Gold: ⭐ 500/week<br>
+                            VIP Members: 89 players<br>
+                            Weekly Distribution: ⭐ 18,500
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-primary" onclick="editCampaign('vip-tiers')">Edit Tiers</button>
+                        </div>
+                    </div>
+
+                    <div class="list-item-actions" style="margin-top: 20px;">
+                        <button class="btn btn-success" onclick="createNewCampaign()">
+                            <i class="fas fa-plus"></i> Create New Campaign
+                        </button>
+                    </div>
+                </div>
+
+                <div id="star-history" class="tab-content">
+                    <h4 style="margin-bottom: 20px;">Star Distribution History</h4>
+                    
+                    <div class="form-row" style="margin-bottom: 20px;">
+                        <div class="form-col">
+                            <input type="text" class="form-input" placeholder="Search by player or transaction..." id="historySearch">
+                        </div>
+                        <div class="form-col">
+                            <select class="form-select" id="historyFilter">
+                                <option value="all">All Transactions</option>
+                                <option value="bonus">Bonus Only</option>
+                                <option value="compensation">Compensations</option>
+                                <option value="marketing">Marketing Campaigns</option>
+                                <option value="today">Today</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Player</th>
+                                <th>Amount</th>
+                                <th>Type</th>
+                                <th>Reason</th>
+                                <th>Admin</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2024-09-09 14:30</td>
+                                <td>@player123</td>
+                                <td style="color: #00ff88;">⭐ +500</td>
+                                <td>Welcome Bonus</td>
+                                <td>New player registration</td>
+                                <td>System</td>
+                                <td><span class="status-badge approved">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td>2024-09-09 14:25</td>
+                                <td>@vipPlayer</td>
+                                <td style="color: #00ff88;">⭐ +1,000</td>
+                                <td>Compensation</td>
+                                <td>Server downtime compensation</td>
+                                <td>admin</td>
+                                <td><span class="status-badge approved">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td>2024-09-09 14:20</td>
+                                <td>Bulk Campaign</td>
+                                <td style="color: #00ff88;">⭐ +25,000</td>
+                                <td>Marketing</td>
+                                <td>Weekend bonus distribution</td>
+                                <td>admin</td>
+                                <td><span class="status-badge approved">Completed</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Star Transactions Modal -->
+    <div id="starTransactionsModal" class="modal">
+        <div class="modal-content modal-content-large">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-exchange-alt"></i> Star Transactions</h3>
+                <button class="modal-close" onclick="closeModal('starTransactionsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-tabs">
+                    <button class="modal-tab active" onclick="switchTab('star-deposits')">Deposits</button>
+                    <button class="modal-tab" onclick="switchTab('star-withdrawals')">Withdrawals</button>
+                    <button class="modal-tab" onclick="switchTab('conversion-rates')">Exchange Rates</button>
+                </div>
+
+                <div id="star-deposits" class="tab-content active">
+                    <h4 style="margin-bottom: 20px;">Star Deposits (Pending Approval)</h4>
+                    
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">@player456 - ⭐ 5,000 stars</div>
+                            <div class="list-item-status status-pending">Pending</div>
+                        </div>
+                        <div class="list-item-details">
+                            Payment Method: Credit Card (****2345)<br>
+                            Amount: $50.00 USD → ⭐ 5,000 stars<br>
+                            Transaction ID: TXN789456123<br>
+                            Submitted: 2 hours ago
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-success" onclick="approveStarDeposit('dep001')">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="btn btn-danger" onclick="rejectStarDeposit('dep001')">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                            <button class="btn btn-primary" onclick="viewDepositDetails('dep001')">
+                                <i class="fas fa-eye"></i> Details
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">@newPlayer - ⭐ 1,000 stars</div>
+                            <div class="list-item-status status-pending">Pending</div>
+                        </div>
+                        <div class="list-item-details">
+                            Payment Method: PayPal (user@email.com)<br>
+                            Amount: $10.00 USD → ⭐ 1,000 stars<br>
+                            Transaction ID: PAY123789456<br>
+                            Submitted: 45 minutes ago
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-success" onclick="approveStarDeposit('dep002')">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="btn btn-danger" onclick="rejectStarDeposit('dep002')">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                            <button class="btn btn-primary" onclick="viewDepositDetails('dep002')">
+                                <i class="fas fa-eye"></i> Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="star-withdrawals" class="tab-content">
+                    <h4 style="margin-bottom: 20px;">Star Withdrawals (Pending Approval)</h4>
+                    
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">@vipPlayer - ⭐ 10,000 stars</div>
+                            <div class="list-item-status status-pending">Pending</div>
+                        </div>
+                        <div class="list-item-details">
+                            Withdrawal Method: Bank Transfer<br>
+                            Equivalent: $100.00 USD<br>
+                            Account: ****5678<br>
+                            Requested: 3 hours ago<br>
+                            <div style="margin-top: 8px;">
+                                <strong style="color: #ffc107;">Verification Required:</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>✅ Identity verified</li>
+                                    <li>✅ Account balance sufficient</li>
+                                    <li>⚠️ Large amount - manual review</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-success" onclick="approveStarWithdrawal('with001')">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="btn btn-danger" onclick="rejectStarWithdrawal('with001')">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                            <button class="btn btn-warning" onclick="requestMoreInfo('with001')">
+                                <i class="fas fa-question"></i> Request Info
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">@player789 - ⭐ 2,500 stars</div>
+                            <div class="list-item-status status-pending">Pending</div>
+                        </div>
+                        <div class="list-item-details">
+                            Withdrawal Method: PayPal<br>
+                            Equivalent: $25.00 USD<br>
+                            Account: verified@email.com<br>
+                            Requested: 1 hour ago<br>
+                            <div style="margin-top: 8px;">
+                                <strong style="color: #00ff88;">All Checks Passed:</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>✅ Identity verified</li>
+                                    <li>✅ Account balance sufficient</li>
+                                    <li>✅ No fraud flags</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-success" onclick="approveStarWithdrawal('with002')">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="btn btn-danger" onclick="rejectStarWithdrawal('with002')">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="conversion-rates" class="tab-content">
+                    <h4 style="margin-bottom: 20px;">Star Exchange Rates & Settings</h4>
+                    
+                    <div class="dashboard-grid" style="margin-bottom: 30px;">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon"><i class="fas fa-coins"></i></div>
+                                <div class="card-title">Current Rate</div>
+                            </div>
+                            <div class="card-value">100:1</div>
+                            <div class="card-subtitle">⭐ 100 stars = $1 USD</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+                                <div class="card-title">Daily Volume</div>
+                            </div>
+                            <div class="card-value">⭐ 125K</div>
+                            <div class="card-subtitle">Stars exchanged today</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">Purchase Rate (Stars per $1 USD)</label>
+                            <input type="number" class="form-input" value="100" id="purchaseRate">
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Withdrawal Rate (Stars per $1 USD)</label>
+                            <input type="number" class="form-input" value="100" id="withdrawalRate">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">Minimum Deposit</label>
+                            <input type="number" class="form-input" value="10" id="minDeposit"> USD
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Minimum Withdrawal</label>
+                            <input type="number" class="form-input" value="25" id="minWithdrawal"> USD
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">Daily Withdrawal Limit</label>
+                            <input type="number" class="form-input" value="500" id="dailyLimit"> USD
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Transaction Fee (%)</label>
+                            <input type="number" class="form-input" value="2.5" id="transactionFee" step="0.1"> %
+                        </div>
+                    </div>
+
+                    <div class="list-item-actions">
+                        <button class="btn btn-success" onclick="updateExchangeRates()">
+                            <i class="fas fa-save"></i> Update Rates
+                        </button>
+                        <button class="btn btn-warning" onclick="viewRateHistory()">
+                            <i class="fas fa-history"></i> Rate History
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fraud Protection Modal -->
+    <div id="fraudProtectionModal" class="modal">
+        <div class="modal-content modal-content-large">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-shield-virus"></i> Fraud Protection Center</h3>
+                <button class="modal-close" onclick="closeModal('fraudProtectionModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-tabs">
+                    <button class="modal-tab active" onclick="switchTab('fraud-alerts')">Active Alerts</button>
+                    <button class="modal-tab" onclick="switchTab('fraud-rules')">Protection Rules</button>
+                    <button class="modal-tab" onclick="switchTab('spam-detection')">Spam Detection</button>
+                    <button class="modal-tab" onclick="switchTab('risk-analysis')">Risk Analysis</button>
+                </div>
+
+                <div id="fraud-alerts" class="tab-content active">
+                    <h4 style="margin-bottom: 20px;">Active Fraud Alerts</h4>
+                    
+                    <div class="dashboard-grid" style="margin-bottom: 20px;">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                                <div class="card-title">High Risk Alerts</div>
+                            </div>
+                            <div class="card-value" id="highRiskAlerts">3</div>
+                            <div class="card-subtitle">Require immediate action</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon"><i class="fas fa-eye"></i></div>
+                                <div class="card-title">Under Review</div>
+                            </div>
+                            <div class="card-value" id="underReview">8</div>
+                            <div class="card-subtitle">Accounts being monitored</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon"><i class="fas fa-ban"></i></div>
+                                <div class="card-title">Blocked Today</div>
+                            </div>
+                            <div class="card-value" id="blockedToday">12</div>
+                            <div class="card-subtitle">Fraudulent accounts</div>
+                        </div>
+                    </div>
+
+                    <!-- High Priority Alerts -->
+                    <div class="list-item" style="border-left: 4px solid #ff4757;">
+                        <div class="list-item-header">
+                            <div class="list-item-title">🚨 Multi-Account Fraud Detection</div>
+                            <div class="list-item-status" style="background: rgba(255, 71, 87, 0.2); color: #ff4757;">Critical</div>
+                        </div>
+                        <div class="list-item-details">
+                            <strong>Pattern:</strong> 15 accounts registered from same IP (192.168.1.100)<br>
+                            <strong>Behavior:</strong> All accounts making minimum deposits, coordinated betting<br>
+                            <strong>Risk Score:</strong> 95/100<br>
+                            <strong>Detected:</strong> 2 hours ago
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-danger" onclick="blockFraudNetwork('net001')">
+                                <i class="fas fa-ban"></i> Block All
+                            </button>
+                            <button class="btn btn-warning" onclick="investigateFraud('net001')">
+                                <i class="fas fa-search"></i> Investigate
+                            </button>
+                            <button class="btn btn-primary" onclick="viewFraudDetails('net001')">
+                                <i class="fas fa-info"></i> Details
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="list-item" style="border-left: 4px solid #ffc107;">
+                        <div class="list-item-header">
+                            <div class="list-item-title">⚠️ Suspicious Betting Pattern</div>
+                            <div class="list-item-status" style="background: rgba(255, 193, 7, 0.2); color: #ffc107;">High Risk</div>
+                        </div>
+                        <div class="list-item-details">
+                            <strong>Player:</strong> @suspicious_player<br>
+                            <strong>Pattern:</strong> Always cashes out at 1.05x with large bets<br>
+                            <strong>Potential:</strong> Inside information or bot usage<br>
+                            <strong>Risk Score:</strong> 78/100
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-warning" onclick="flagForReview('susp001')">
+                                <i class="fas fa-flag"></i> Flag Account
+                            </button>
+                            <button class="btn btn-primary" onclick="reviewBettingHistory('susp001')">
+                                <i class="fas fa-chart-line"></i> Review History
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="list-item" style="border-left: 4px solid #17a2b8;">
+                        <div class="list-item-header">
+                            <div class="list-item-title">ℹ️ Rapid Withdrawal Pattern</div>
+                            <div class="list-item-status" style="background: rgba(23, 162, 184, 0.2); color: #17a2b8;">Medium Risk</div>
+                        </div>
+                        <div class="list-item-details">
+                            <strong>Player:</strong> @quick_withdrawer<br>
+                            <strong>Pattern:</strong> Deposits, wins, withdraws within 1 hour<br>
+                            <strong>Frequency:</strong> 8 times in last 3 days<br>
+                            <strong>Risk Score:</strong> 65/100
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-warning" onclick="requireKYC('quick001')">
+                                <i class="fas fa-id-card"></i> Require KYC
+                            </button>
+                            <button class="btn btn-primary" onclick="reviewTransactions('quick001')">
+                                <i class="fas fa-receipt"></i> Review Txns
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="fraud-rules" class="tab-content">
+                    <h4 style="margin-bottom: 20px;">Fraud Protection Rules</h4>
+                    
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">Multi-Account Detection</div>
+                            <div class="list-item-status status-approved">Active</div>
+                        </div>
+                        <div class="list-item-details">
+                            <strong>Trigger:</strong> More than 3 accounts from same IP/device<br>
+                            <strong>Action:</strong> Auto-flag for review<br>
+                            <strong>Threshold:</strong> Risk score > 70
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-primary" onclick="editRule('multi-account')">Edit Rule</button>
+                            <button class="btn btn-warning" onclick="disableRule('multi-account')">Disable</button>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">Betting Pattern Analysis</div>
+                            <div class="list-item-status status-approved">Active</div>
+                        </div>
+                        <div class="list-item-details">
+                            <strong>Trigger:</strong> Consistent cashout at specific multipliers<br>
+                            <strong>Action:</strong> Monitor and flag suspicious patterns<br>
+                            <strong>Sensitivity:</strong> High
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-primary" onclick="editRule('betting-pattern')">Edit Rule</button>
+                            <button class="btn btn-warning" onclick="disableRule('betting-pattern')">Disable</button>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">Rapid Transaction Monitoring</div>
+                            <div class="list-item-status status-approved">Active</div>
+                        </div>
+                        <div class="list-item-details">
+                            <strong>Trigger:</strong> Deposit → Win → Withdraw cycle < 2 hours<br>
+                            <strong>Action:</strong> Require additional verification<br>
+                            <strong>Frequency Limit:</strong> 3 times per week
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-primary" onclick="editRule('rapid-transaction')">Edit Rule</button>
+                            <button class="btn btn-warning" onclick="disableRule('rapid-transaction')">Disable</button>
+                        </div>
+                    </div>
+
+                    <div class="list-item-actions" style="margin-top: 20px;">
+                        <button class="btn btn-success" onclick="createNewRule()">
+                            <i class="fas fa-plus"></i> Create New Rule
+                        </button>
+                        <button class="btn btn-primary" onclick="importRuleTemplate()">
+                            <i class="fas fa-download"></i> Import Template
+                        </button>
+                    </div>
+                </div>
+
+                <div id="spam-detection" class="tab-content">
+                    <h4 style="margin-bottom: 20px;">Spam Detection System</h4>
+                    
+                    <div class="dashboard-grid" style="margin-bottom: 20px;">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon"><i class="fas fa-robot"></i></div>
+                                <div class="card-title">Bot Accounts</div>
+                            </div>
+                            <div class="card-value" id="botAccounts">7</div>
+                            <div class="card-subtitle">Detected and blocked</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon"><i class="fas fa-comments"></i></div>
+                                <div class="card-title">Spam Messages</div>
+                            </div>
+                            <div class="card-value" id="spamMessages">23</div>
+                            <div class="card-subtitle">Filtered today</div>
+                        </div>
+                    </div>
+
+                    <!-- Spam Detection Rules -->
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">
+                                <input type="checkbox" checked> Auto-Block Duplicate Messages
+                            </label>
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">
+                                <input type="checkbox" checked> Rate Limit Chat Messages
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">
+                                <input type="checkbox" checked> Block Promotional Links
+                            </label>
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">
+                                <input type="checkbox"> Auto-Mute Repeat Offenders
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Banned Words/Phrases</label>
+                        <textarea class="form-textarea" placeholder="Enter banned words, one per line...">spam
+promotion
+free money
+guaranteed win
+hack
+cheat</textarea>
+                    </div>
+
+                    <div class="list-item-actions">
+                        <button class="btn btn-success" onclick="updateSpamSettings()">
+                            <i class="fas fa-save"></i> Update Settings
+                        </button>
+                        <button class="btn btn-warning" onclick="reviewSpamLog()">
+                            <i class="fas fa-list"></i> View Spam Log
+                        </button>
+                    </div>
+                </div>
+
+                <div id="risk-analysis" class="tab-content">
+                    <h4 style="margin-bottom: 20px;">Risk Analysis Dashboard</h4>
+                    
+                    <div class="chart-container">
+                        <div style="color: rgba(255,255,255,0.7);">
+                            <i class="fas fa-chart-pie" style="font-size: 32px; margin-bottom: 10px;"></i><br>
+                            Risk Score Distribution<br>
+                            <small>Real-time player risk analysis</small>
+                        </div>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Risk Score</th>
+                                <th>Primary Risk</th>
+                                <th>Last Activity</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>@high_risk_user</td>
+                                <td style="color: #ff4757;">95/100</td>
+                                <td>Multi-accounting</td>
+                                <td>2 min ago</td>
+                                <td><span class="status-badge rejected">Flagged</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger" onclick="blockUser('risk001')">Block</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>@medium_risk</td>
+                                <td style="color: #ffc107;">68/100</td>
+                                <td>Betting patterns</td>
+                                <td>15 min ago</td>
+                                <td><span class="status-badge pending">Monitoring</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="reviewUser('risk002')">Review</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>@low_risk_player</td>
+                                <td style="color: #00ff88;">25/100</td>
+                                <td>None</td>
+                                <td>1 hour ago</td>
+                                <td><span class="status-badge approved">Clean</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="viewProfile('risk003')">View</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Support Ticket System -->
+    <div id="ticketSystemModal" class="modal">
+        <div class="modal-content modal-content-large">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-ticket-alt"></i> Advanced Support Ticket System</h3>
+                <button class="modal-close" onclick="closeModal('ticketSystemModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-tabs">
+                    <button class="modal-tab active" onclick="switchTab('active-tickets')">Active Tickets</button>
+                    <button class="modal-tab" onclick="switchTab('priority-queue')">Priority Queue</button>
+                    <button class="modal-tab" onclick="switchTab('templates')">Templates</button>
+                    <button class="modal-tab" onclick="switchTab('analytics')">Analytics</button>
+                </div>
+
+                <div id="active-tickets" class="tab-content active">
+                    <div class="dashboard-grid" style="margin-bottom: 20px;">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon"><i class="fas fa-clock"></i></div>
+                                <div class="card-title">Open Tickets</div>
+                            </div>
+                            <div class="card-value" id="openTicketsCount">15</div>
+                            <div class="card-subtitle">Awaiting response</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon"><i class="fas fa-bolt"></i></div>
+                                <div class="card-title">Avg Response</div>
+                            </div>
+                            <div class="card-value" id="avgResponse">12m</div>
+                            <div class="card-subtitle">Average response time</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon"><i class="fas fa-smile"></i></div>
+                                <div class="card-title">Satisfaction</div>
+                            </div>
+                            <div class="card-value" id="satisfaction">94%</div>
+                            <div class="card-subtitle">Customer satisfaction</div>
+                        </div>
+                    </div>
+
+                    <!-- Ticket List -->
+                    <div class="list-item" style="border-left: 4px solid #ff4757;">
+                        <div class="list-item-header">
+                            <div class="list-item-title">Ticket #2024-001 - Missing Stars After Deposit</div>
+                            <div class="list-item-status" style="background: rgba(255, 71, 87, 0.2); color: #ff4757;">Urgent</div>
+                        </div>
+                        <div class="list-item-details">
+                            <strong>From:</strong> @frustrated_user<br>
+                            <strong>Category:</strong> Payment Issues<br>
+                            <strong>Message:</strong> "I deposited $50 but didn't receive my 5,000 stars. Transaction ID: TXN789"<br>
+                            <strong>Created:</strong> 2 hours ago<br>
+                            <strong>Last Reply:</strong> 45 minutes ago (Customer)
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-success" onclick="quickReply('ticket001', 'deposit_resolved')">
+                                <i class="fas fa-magic"></i> Quick Fix
+                            </button>
+                            <button class="btn btn-primary" onclick="openTicketChat('ticket001')">
+                                <i class="fas fa-comments"></i> Open Chat
+                            </button>
+                            <button class="btn btn-warning" onclick="escalateTicket('ticket001')">
+                                <i class="fas fa-arrow-up"></i> Escalate
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="list-item" style="border-left: 4px solid #ffc107;">
+                        <div class="list-item-header">
+                            <div class="list-item-title">Ticket #2024-002 - Account Verification Issues</div>
+                            <div class="list-item-status" style="background: rgba(255, 193, 7, 0.2); color: #ffc107;">High</div>
+                        </div>
+                        <div class="list-item-details">
+                            <strong>From:</strong> @new_player<br>
+                            <strong>Category:</strong> Account Issues<br>
+                            <strong>Message:</strong> "Can't withdraw stars, system says account needs verification but I uploaded documents"<br>
+                            <strong>Created:</strong> 4 hours ago<br>
+                            <strong>Last Reply:</strong> 30 minutes ago (Admin)
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-success" onclick="verifyAccount('ticket002')">
+                                <i class="fas fa-check"></i> Verify Account
+                            </button>
+                            <button class="btn btn-primary" onclick="openTicketChat('ticket002')">
+                                <i class="fas fa-comments"></i> Continue Chat
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="list-item" style="border-left: 4px solid #17a2b8;">
+                        <div class="list-item-header">
+                            <div class="list-item-title">Ticket #2024-003 - Game Rules Question</div>
+                            <div class="list-item-status" style="background: rgba(23, 162, 184, 0.2); color: #17a2b8;">Normal</div>
+                        </div>
+                        <div class="list-item-details">
+                            <strong>From:</strong> @curious_player<br>
+                            <strong>Category:</strong> General Inquiry<br>
+                            <strong>Message:</strong> "How does the auto-cashout feature work? Can I set multiple cashout points?"<br>
+                            <strong>Created:</strong> 1 hour ago<br>
+                            <strong>Status:</strong> Awaiting admin response
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-success" onclick="useTemplate('ticket003', 'auto_cashout_guide')">
+                                <i class="fas fa-file-alt"></i> Use Template
+                            </button>
+                            <button class="btn btn-primary" onclick="openTicketChat('ticket003')">
+                                <i class="fas fa-comments"></i> Reply
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="list-item-actions" style="margin-top: 20px;">
+                        <button class="btn btn-success" onclick="createNewTicket()">
+                            <i class="fas fa-plus"></i> Create Ticket
+                        </button>
+                        <button class="btn btn-primary" onclick="bulkActions()">
+                            <i class="fas fa-tasks"></i> Bulk Actions
+                        </button>
+                        <button class="btn btn-warning" onclick="exportTickets()">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+
+                <div id="priority-queue" class="tab-content">
+                    <h4 style="margin-bottom: 20px;">Priority Queue Management</h4>
+                    
+                    <div class="form-row" style="margin-bottom: 20px;">
+                        <div class="form-col">
+                            <label class="form-label">Auto-Priority Rules</label>
+                            <select class="form-select" id="priorityRules">
+                                <option value="enabled">Enabled</option>
+                                <option value="manual">Manual Only</option>
+                                <option value="disabled">Disabled</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">VIP Fast Track</label>
+                            <select class="form-select" id="vipFastTrack">
+                                <option value="enabled">Enabled</option>
+                                <option value="disabled">Disabled</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Priority Rules -->
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">Payment Issues → Urgent Priority</div>
+                            <div class="list-item-status status-approved">Active</div>
+                        </div>
+                        <div class="list-item-details">
+                            Keywords: deposit, withdrawal, payment, missing stars, transaction<br>
+                            Auto-escalate: After 30 minutes without response
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-primary" onclick="editPriorityRule('payment')">Edit</button>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">VIP Players → High Priority</div>
+                            <div class="list-item-status status-approved">Active</div>
+                        </div>
+                        <div class="list-item-details">
+                            All tickets from VIP tier players automatically get high priority<br>
+                            Target response time: &lt; 5 minutes
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-primary" onclick="editPriorityRule('vip')">Edit</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="templates" class="tab-content">
+                    <h4 style="margin-bottom: 20px;">Response Templates</h4>
+                    
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">Deposit Processing Delay</div>
+                            <div class="list-item-status status-approved">Active</div>
+                        </div>
+                        <div class="list-item-details">
+                            <strong>Template:</strong> "We apologize for the delay. Your deposit is being processed and stars will be credited within 24 hours. Transaction ID: {transaction_id}"
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-primary" onclick="editTemplate('deposit_delay')">Edit</button>
+                            <button class="btn btn-success" onclick="useTemplate('deposit_delay')">Use</button>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">Account Verification Guide</div>
+                            <div class="list-item-status status-approved">Active</div>
+                        </div>
+                        <div class="list-item-details">
+                            <strong>Template:</strong> Comprehensive guide for account verification process with step-by-step instructions
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-primary" onclick="editTemplate('verification_guide')">Edit</button>
+                            <button class="btn btn-success" onclick="useTemplate('verification_guide')">Use</button>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">Auto-Cashout Explanation</div>
+                            <div class="list-item-status status-approved">Active</div>
+                        </div>
+                        <div class="list-item-details">
+                            <strong>Template:</strong> Detailed explanation of how auto-cashout feature works with examples
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn btn-primary" onclick="editTemplate('auto_cashout_guide')">Edit</button>
+                            <button class="btn btn-success" onclick="useTemplate('auto_cashout_guide')">Use</button>
+                        </div>
+                    </div>
+
+                    <div class="list-item-actions" style="margin-top: 20px;">
+                        <button class="btn btn-success" onclick="createNewTemplate()">
+                            <i class="fas fa-plus"></i> New Template
+                        </button>
+                        <button class="btn btn-primary" onclick="importTemplates()">
+                            <i class="fas fa-upload"></i> Import Templates
+                        </button>
+                    </div>
+                </div>
+
+                <div id="analytics" class="tab-content">
+                    <h4 style="margin-bottom: 20px;">Support Analytics</h4>
+                    
+                    <div class="dashboard-grid" style="margin-bottom: 20px;">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon"><i class="fas fa-ticket-alt"></i></div>
+                                <div class="card-title">Tickets Today</div>
+                            </div>
+                            <div class="card-value" id="ticketsToday">47</div>
+                            <div class="card-subtitle">+12% from yesterday</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon"><i class="fas fa-clock"></i></div>
+                                <div class="card-title">Avg Resolution</div>
+                            </div>
+                            <div class="card-value" id="avgResolution">2.5h</div>
+                            <div class="card-subtitle">15% faster than last week</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon"><i class="fas fa-thumbs-up"></i></div>
+                                <div class="card-title">First Contact Resolution</div>
+                            </div>
+                            <div class="card-value" id="firstContactRes">78%</div>
+                            <div class="card-subtitle">Resolved on first reply</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <div style="color: rgba(255,255,255,0.7);">
+                            <i class="fas fa-chart-bar" style="font-size: 32px; margin-bottom: 10px;"></i><br>
+                            Ticket Volume & Response Times<br>
+                            <small>Last 30 days performance metrics</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Admin credentials
+        const ADMIN_CREDENTIALS = {
+            username: 'admin',
+            password: 'aviator2024'
+        };
+
+        // Global variables
+        let updateInterval;
+        let gameInterval;
+        let currentMultiplier = 1.00;
+        let gameRunning = false;
+        let roundNumber = 1543;
+        let notifications = [];
+
+        // Authentication functions
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('loginError');
+            const loginBtn = document.getElementById('loginBtn');
+
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return;
+            }
+
+            // Show loading
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+            loginBtn.disabled = true;
+
+            // Simulate authentication delay
+            setTimeout(() => {
+                if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('dashboard').classList.remove('hidden');
+                    startRealTimeUpdates();
+                    showNotification('Welcome to Admin Dashboard!', 'success');
+                } else {
+                    showError('Invalid username or password');
+                }
+
+                // Reset login button
+                loginBtn.innerHTML = 'Login';
+                loginBtn.disabled = false;
+            }, 1500);
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('dashboard').classList.add('hidden');
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+                stopRealTimeUpdates();
+                showNotification('Logged out successfully', 'info');
+            }
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('loginError');
+            errorEl.textContent = message;
+            setTimeout(() => {
+                errorEl.textContent = '';
+            }, 4000);
+        }
+
+        // Modal Management
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('show');
+                showNotification('Opening ' + modalId.replace('Modal', '') + '...', 'info');
+            } else {
+                showNotification('This feature is under development', 'warning');
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        }
+
+        // Real-time Updates System
+        function startRealTimeUpdates() {
+            updateInterval = setInterval(updateDashboardStats, 2000);
+            gameInterval = setInterval(updateGameMultiplier, 100);
+            gameRunning = true;
+            showNotification('Real-time monitoring started', 'success');
+        }
+
+        function stopRealTimeUpdates() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+            if (gameInterval) {
+                clearInterval(gameInterval);
+            }
+            gameRunning = false;
+        }
+
+        function updateDashboardStats() {
+            // Simulate real-time data updates
+            const activePlayers = Math.floor(Math.random() * 50) + 200;
+            const gamesToday = roundNumber;
+            const revenue = Math.floor(Math.random() * 1000) + 12000;
+            const avgMultiplier = (Math.random() * 2 + 1.5).toFixed(2);
+
+            // Update main dashboard
+            updateElement('activePlayers', activePlayers);
+            updateElement('gamesToday', gamesToday.toLocaleString());
+            updateElement('revenue', '$' + revenue.toLocaleString());
+            updateElement('avgMultiplier', avgMultiplier + 'x');
+
+            // Update status bar
+            updateElement('livePlayerCount', activePlayers + ' Online');
+            updateElement('gameRounds', 'Round #' + roundNumber.toLocaleString());
+
+            // Update action card badges
+            const pendingWithdrawals = Math.floor(Math.random() * 10) + 1;
+            const todayDeposits = Math.floor(Math.random() * 30) + 15;
+            const openTickets = Math.floor(Math.random() * 15) + 5;
+            const securityAlerts = Math.floor(Math.random() * 5);
+
+            updateElement('pendingWithdrawals', pendingWithdrawals + ' Pending');
+            updateElement('todayDeposits', todayDeposits + ' Today');
+            updateElement('openTickets', openTickets + ' Open');
+            updateElement('securityAlerts', securityAlerts + ' Alerts');
+
+            // Random new round simulation
+            if (Math.random() < 0.01) {
+                roundNumber++;
+                showNotification(`New round started: #${roundNumber}`, 'info');
+            }
+        }
+
+        function updateGameMultiplier() {
+            if (gameRunning && Math.random() < 0.3) {
+                currentMultiplier += Math.random() * 0.05 + 0.01;
+                
+                // Random crash simulation
+                if (Math.random() < 0.005) {
+                    showNotification(`Game crashed at ${currentMultiplier.toFixed(2)}x`, 'warning');
+                    currentMultiplier = 1.00;
+                }
+            }
+        }
+
+        function updateElement(id, value) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
+        }
+
+        // Enhanced Notification System
+        function showNotification(message, type = 'info', persistent = false) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            
+            const header = document.createElement('div');
+            header.className = 'notification-header';
+            
+            const title = document.createElement('div');
+            title.className = 'notification-title';
+            title.textContent = getNotificationTitle(type);
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'notification-close';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.onclick = () => notification.remove();
+            
+            header.appendChild(title);
+            header.appendChild(closeBtn);
+            
+            const body = document.createElement('div');
+            body.className = 'notification-body';
+            body.textContent = message;
+            
+            const time = document.createElement('div');
+            time.className = 'notification-time';
+            time.textContent = new Date().toLocaleTimeString();
+            
+            notification.appendChild(header);
+            notification.appendChild(body);
+            notification.appendChild(time);
+            
+            // Set border color based on type
+            switch (type) {
+                case 'success':
+                    notification.style.borderLeftColor = '#00ff88';
+                    break;
+                case 'error':
+                    notification.style.borderLeftColor = '#ff4757';
+                    break;
+                case 'warning':
+                    notification.style.borderLeftColor = '#ffc107';
+                    break;
+                default:
+                    notification.style.borderLeftColor = '#00d4ff';
+            }
+
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => notification.classList.add('show'), 100);
+
+            // Auto remove unless persistent
+            if (!persistent) {
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => notification.remove(), 300);
+                }, 4000);
+            }
+
+            // Add to notifications array for tracking
+            notifications.push({
+                id: Date.now(),
+                message,
+                type,
+                time: new Date().toISOString(),
+                read: false
+            });
+
+            updateNotificationCounter();
+        }
+
+        function getNotificationTitle(type) {
+            switch (type) {
+                case 'success': return 'Success';
+                case 'error': return 'Error';
+                case 'warning': return 'Warning';
+                case 'info': return 'Information';
+                default: return 'Notification';
+            }
+        }
+
+        function updateNotificationCounter() {
+            const unread = notifications.filter(n => !n.read).length;
+            const counter = document.getElementById('notificationCount');
+            if (counter) {
+                counter.textContent = unread > 0 ? unread + ' New' : '0 New';
+            }
+        }
+
+        function toggleNotifications() {
+            // Mark all as read
+            notifications.forEach(n => n.read = true);
+            updateNotificationCounter();
+            showNotification('All notifications marked as read', 'info');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle Enter key on login form
+            document.getElementById('password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    login();
+                }
+            });
+
+            // Close modals when clicking outside
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('modal')) {
+                    e.target.classList.remove('show');
+                }
+            });
+
+            // Initialize welcome message
+            console.log('Aviator Admin Dashboard initialized');
+        });
+
+        // Socket.io integration (if available)
+        try {
+            const socket = io();
+            
+            socket.on('connect', () => {
+                console.log('Admin connected to server');
+                showNotification('Connected to game server', 'success');
+            });
+
+            socket.on('adminUpdate', (data) => {
+                updateDashboardStats();
+            });
+
+            socket.on('gameRound', (data) => {
+                roundNumber = data.roundNumber || roundNumber;
+                updateElement('gameRounds', 'Round #' + roundNumber.toLocaleString());
+            });
+
+            // Star Management Socket Events
+            socket.on('star_transaction_update', (data) => {
+                updateStarTransactionUI(data);
+            });
+
+            socket.on('fraud_alert', (data) => {
+                showFraudAlert(data);
+            });
+
+            socket.on('support_ticket_update', (data) => {
+                updateTicketUI(data);
+            });
+
+        } catch (error) {
+            console.log('Socket.io not available, running in demo mode');
+            showNotification('Running in demo mode', 'warning');
+        }
+
+        // Star Management Functions
+        function addStarsToPlayer() {
+            const playerId = document.getElementById('starPlayerId').value;
+            const amount = parseInt(document.getElementById('starAmount').value);
+            const bonusType = document.getElementById('bonusType').value;
+            const reason = document.getElementById('bonusReason').value;
+
+            if (!playerId || !amount || amount <= 0) {
+                showNotification('Please enter valid player ID and amount', 'error');
+                return;
+            }
+
+            const data = {
+                action: 'add_stars',
+                playerId: playerId,
+                amount: amount,
+                bonusType: bonusType,
+                reason: reason,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                socket.emit('admin_action', data);
+            } catch (e) {
+                console.log('Demo mode: Star addition simulated');
+            }
+            
+            addToTransactionLog('bonus', playerId, amount, `${bonusType} - ${reason}`);
+            showNotification(`Added ${amount.toLocaleString()} stars to ${playerId}`, 'success');
+            
+            // Clear form
+            document.getElementById('starPlayerId').value = '';
+            document.getElementById('starAmount').value = '';
+            document.getElementById('bonusReason').value = '';
+        }
+
+        function executeBulkBonus() {
+            const criteria = document.getElementById('bulkCriteria').value;
+            const amount = parseInt(document.getElementById('bulkAmount').value);
+            const reason = document.getElementById('bulkReason').value;
+            const maxPlayers = parseInt(document.getElementById('maxPlayers').value) || 100;
+
+            if (!criteria || !amount || amount <= 0) {
+                showNotification('Please fill all required fields', 'error');
+                return;
+            }
+
+            const confirmText = `This will give ${amount.toLocaleString()} stars to players matching "${criteria}" criteria (max ${maxPlayers} players). Continue?`;
+            
+            if (confirm(confirmText)) {
+                const data = {
+                    action: 'bulk_bonus',
+                    criteria: criteria,
+                    amount: amount,
+                    reason: reason,
+                    maxPlayers: maxPlayers,
+                    timestamp: new Date().toISOString()
+                };
+
+                try {
+                    socket.emit('admin_action', data);
+                } catch (e) {
+                    console.log('Demo mode: Bulk bonus simulated');
+                }
+                
+                showNotification(`Bulk bonus initiated: ${amount.toLocaleString()} stars to ${criteria}`, 'success');
+                
+                // Clear form
+                document.getElementById('bulkAmount').value = '';
+                document.getElementById('bulkReason').value = '';
+                document.getElementById('maxPlayers').value = '';
+            }
+        }
+
+        function launchMarketing() {
+            const campaignName = document.getElementById('campaignName').value;
+            const rewardType = document.getElementById('rewardType').value;
+            const rewardAmount = parseInt(document.getElementById('rewardAmount').value);
+            const targetAudience = document.getElementById('targetAudience').value;
+            const duration = parseInt(document.getElementById('campaignDuration').value);
+
+            if (!campaignName || !rewardAmount || rewardAmount <= 0) {
+                showNotification('Please fill all required campaign fields', 'error');
+                return;
+            }
+
+            const data = {
+                action: 'launch_marketing_campaign',
+                campaignName: campaignName,
+                rewardType: rewardType,
+                rewardAmount: rewardAmount,
+                targetAudience: targetAudience,
+                duration: duration,
+                startDate: new Date().toISOString(),
+                status: 'active'
+            };
+
+            try {
+                socket.emit('admin_action', data);
+            } catch (e) {
+                console.log('Demo mode: Marketing campaign simulated');
+            }
+            
+            showNotification(`Marketing campaign "${campaignName}" launched successfully`, 'success');
+            
+            // Clear form
+            document.getElementById('campaignName').value = '';
+            document.getElementById('rewardAmount').value = '';
+            document.getElementById('campaignDuration').value = '';
+        }
+
+        function addToTransactionLog(type, playerId, amount, description) {
+            const logEntry = {
+                id: 'TXN' + Date.now(),
+                type: type,
+                playerId: playerId,
+                amount: amount,
+                description: description,
+                timestamp: new Date().toISOString(),
+                status: 'completed'
+            };
+
+            console.log('Transaction logged:', logEntry);
+        }
+
+        function approveDeposit(depositId) {
+            const data = {
+                action: 'approve_star_deposit',
+                depositId: depositId,
+                status: 'approved',
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                socket.emit('admin_action', data);
+            } catch (e) {
+                console.log('Demo mode: Deposit approval simulated');
+            }
+            
+            showNotification(`Deposit ${depositId} approved`, 'success');
+        }
+
+        function rejectDeposit(depositId) {
+            const reason = prompt('Please enter rejection reason:');
+            if (!reason) return;
+
+            const data = {
+                action: 'reject_star_deposit',
+                depositId: depositId,
+                reason: reason,
+                status: 'rejected',
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                socket.emit('admin_action', data);
+            } catch (e) {
+                console.log('Demo mode: Deposit rejection simulated');
+            }
+            
+            showNotification(`Deposit ${depositId} rejected: ${reason}`, 'warning');
+        }
+
+        function approveWithdrawal(withdrawalId) {
+            const data = {
+                action: 'approve_star_withdrawal',
+                withdrawalId: withdrawalId,
+                status: 'approved',
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                socket.emit('admin_action', data);
+            } catch (e) {
+                console.log('Demo mode: Withdrawal approval simulated');
+            }
+            
+            showNotification(`Withdrawal ${withdrawalId} approved`, 'success');
+        }
+
+        function rejectWithdrawal(withdrawalId) {
+            const reason = prompt('Please enter rejection reason:');
+            if (!reason) return;
+
+            const data = {
+                action: 'reject_star_withdrawal',
+                withdrawalId: withdrawalId,
+                reason: reason,
+                status: 'rejected',
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                socket.emit('admin_action', data);
+            } catch (e) {
+                console.log('Demo mode: Withdrawal rejection simulated');
+            }
+            
+            showNotification(`Withdrawal ${withdrawalId} rejected: ${reason}`, 'warning');
+        }
+
+        function updateExchangeRate() {
+            const starToUsd = parseFloat(document.getElementById('starToUSD').value);
+            const usdToStar = parseFloat(document.getElementById('usdToStar').value);
+            const minDeposit = parseInt(document.getElementById('minDeposit').value);
+            const minWithdrawal = parseInt(document.getElementById('minWithdrawal').value);
+
+            if (!starToUsd || !usdToStar || starToUsd <= 0 || usdToStar <= 0) {
+                showNotification('Please enter valid exchange rates', 'error');
+                return;
+            }
+
+            const data = {
+                action: 'update_exchange_rates',
+                rates: {
+                    starToUSD: starToUsd,
+                    usdToStar: usdToStar,
+                    minDeposit: minDeposit,
+                    minWithdrawal: minWithdrawal
+                },
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                socket.emit('admin_action', data);
+            } catch (e) {
+                console.log('Demo mode: Exchange rate update simulated');
+            }
+            
+            showNotification('Exchange rates updated successfully', 'success');
+        }
+
+        // Fraud Protection Functions
+        function blockFraudNetwork(networkId) {
+            if (confirm('This will block all accounts in this fraud network. Continue?')) {
+                const data = {
+                    action: 'block_fraud_network',
+                    networkId: networkId,
+                    timestamp: new Date().toISOString()
+                };
+
+                try {
+                    socket.emit('admin_action', data);
+                } catch (e) {
+                    console.log('Demo mode: Fraud network blocking simulated');
+                }
+                
+                showNotification(`Fraud network ${networkId} blocked`, 'success');
+            }
+        }
+
+        function investigateFraud(caseId) {
+            showNotification(`Opening fraud investigation for case ${caseId}`, 'info');
+        }
+
+        function viewFraudDetails(caseId) {
+            showNotification(`Loading detailed fraud analysis for ${caseId}`, 'info');
+        }
+
+        function flagForReview(userId) {
+            const data = {
+                action: 'flag_user_for_review',
+                userId: userId,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                socket.emit('admin_action', data);
+            } catch (e) {
+                console.log('Demo mode: User flagging simulated');
+            }
+            
+            showNotification(`User ${userId} flagged for review`, 'warning');
+        }
+
+        function reviewBettingHistory(userId) {
+            showNotification(`Loading betting history for ${userId}`, 'info');
+        }
+
+        function requireKYC(userId) {
+            const data = {
+                action: 'require_kyc',
+                userId: userId,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                socket.emit('admin_action', data);
+            } catch (e) {
+                console.log('Demo mode: KYC requirement simulated');
+            }
+            
+            showNotification(`KYC verification required for ${userId}`, 'warning');
+        }
+
+        function reviewTransactions(userId) {
+            showNotification(`Loading transaction history for ${userId}`, 'info');
+        }
+
+        function updateSpamSettings() {
+            const checkboxes = document.querySelectorAll('#spam-detection input[type="checkbox"]');
+            const settings = {
+                autoBlock: checkboxes[0]?.checked || false,
+                rateLimit: checkboxes[1]?.checked || false,
+                blockLinks: checkboxes[2]?.checked || false,
+                autoMute: checkboxes[3]?.checked || false,
+                bannedWords: document.querySelector('#spam-detection .form-textarea')?.value.split('\n').filter(word => word.trim()) || []
+            };
+
+            const data = {
+                action: 'update_spam_settings',
+                settings: settings,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                socket.emit('admin_action', data);
+            } catch (e) {
+                console.log('Demo mode: Spam settings update simulated');
+            }
+            
+            showNotification('Spam protection settings updated', 'success');
+        }
+
+        function blockUser(userId) {
+            if (confirm(`Block user ${userId}? This action cannot be undone.`)) {
+                const data = {
+                    action: 'block_user',
+                    userId: userId,
+                    timestamp: new Date().toISOString()
+                };
+
+                try {
+                    socket.emit('admin_action', data);
+                } catch (e) {
+                    console.log('Demo mode: User blocking simulated');
+                }
+                
+                showNotification(`User ${userId} blocked`, 'success');
+            }
+        }
+
+        function reviewUser(userId) {
+            showNotification(`Opening review panel for ${userId}`, 'info');
+        }
+
+        function viewProfile(userId) {
+            showNotification(`Loading profile for ${userId}`, 'info');
+        }
+
+        // Support Ticket Functions
+        function quickReply(ticketId, templateId) {
+            const data = {
+                action: 'quick_reply_ticket',
+                ticketId: ticketId,
+                templateId: templateId,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                socket.emit('admin_action', data);
+            } catch (e) {
+                console.log('Demo mode: Quick reply simulated');
+            }
+            
+            showNotification(`Quick reply sent for ticket ${ticketId}`, 'success');
+        }
+
+        function openTicketChat(ticketId) {
+            showNotification(`Opening chat for ticket ${ticketId}`, 'info');
+        }
+
+        function escalateTicket(ticketId) {
+            const data = {
+                action: 'escalate_ticket',
+                ticketId: ticketId,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                socket.emit('admin_action', data);
+            } catch (e) {
+                console.log('Demo mode: Ticket escalation simulated');
+            }
+            
+            showNotification(`Ticket ${ticketId} escalated to supervisor`, 'warning');
+        }
+
+        function verifyAccount(ticketId) {
+            const data = {
+                action: 'verify_account_from_ticket',
+                ticketId: ticketId,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                socket.emit('admin_action', data);
+            } catch (e) {
+                console.log('Demo mode: Account verification simulated');
+            }
+            
+            showNotification('Account verification completed', 'success');
+        }
+
+        function useTemplate(ticketId, templateId) {
+            const data = {
+                action: 'use_template_reply',
+                ticketId: ticketId,
+                templateId: templateId || 'default',
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                socket.emit('admin_action', data);
+            } catch (e) {
+                console.log('Demo mode: Template reply simulated');
+            }
+            
+            showNotification(`Template reply sent for ticket ${ticketId}`, 'success');
+        }
+
+        function createNewTicket() {
+            showNotification('Opening new ticket creation form', 'info');
+        }
+
+        function bulkActions() {
+            showNotification('Opening bulk actions panel', 'info');
+        }
+
+        function exportTickets() {
+            showNotification('Preparing ticket export...', 'info');
+        }
+
+        function createNewRule() {
+            showNotification('Opening new fraud rule creation form', 'info');
+        }
+
+        function importRuleTemplate() {
+            showNotification('Opening rule template import dialog', 'info');
+        }
+
+        function editRule(ruleId) {
+            showNotification(`Editing fraud protection rule: ${ruleId}`, 'info');
+        }
+
+        function disableRule(ruleId) {
+            if (confirm(`Disable fraud protection rule: ${ruleId}?`)) {
+                showNotification(`Fraud rule ${ruleId} disabled`, 'warning');
+            }
+        }
+
+        function reviewSpamLog() {
+            showNotification('Opening spam detection log', 'info');
+        }
+
+        function editPriorityRule(ruleType) {
+            showNotification(`Editing priority rule: ${ruleType}`, 'info');
+        }
+
+        function editTemplate(templateId) {
+            showNotification(`Editing template: ${templateId}`, 'info');
+        }
+
+        function createNewTemplate() {
+            showNotification('Creating new response template', 'info');
+        }
+
+        function importTemplates() {
+            showNotification('Importing response templates', 'info');
+        }
+
+        // UI Update Functions
+        function updateStarTransactionUI(data) {
+            if (data.type === 'deposit') {
+                updateDepositList();
+            } else if (data.type === 'withdrawal') {
+                updateWithdrawalList();
+            }
+        }
+
+        function showFraudAlert(data) {
+            showNotification(`🚨 Fraud Alert: ${data.message}`, 'error');
+            const alertElement = document.getElementById('highRiskAlerts');
+            if (alertElement) {
+                alertElement.textContent = data.highRiskCount || 0;
+            }
+        }
+
+        function updateTicketUI(data) {
+            const openTicketsElement = document.getElementById('openTicketsCount');
+            const avgResponseElement = document.getElementById('avgResponse');
+            
+            if (openTicketsElement) {
+                openTicketsElement.textContent = data.openCount || 0;
+            }
+            if (avgResponseElement) {
+                avgResponseElement.textContent = data.avgResponse || 'N/A';
+            }
+        }
+
+        function updateDepositList() {
+            console.log('Updating deposit list');
+        }
+
+        function updateWithdrawalList() {
+            console.log('Updating withdrawal list');
+        }
+
+        // Enhanced Notification System
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            
+            const icon = {
+                'success': 'fas fa-check-circle',
+                'error': 'fas fa-exclamation-circle',
+                'warning': 'fas fa-exclamation-triangle',
+                'info': 'fas fa-info-circle'
+            };
+
+            notification.innerHTML = `
+                <i class="${icon[type]}"></i>
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; margin-left: auto; cursor: pointer; padding: 0 5px; font-size: 18px;">&times;</button>
+            `;
+
+            // Add notification styles if not already present
+            if (!document.getElementById('notification-styles')) {
+                const styles = document.createElement('style');
+                styles.id = 'notification-styles';
+                styles.textContent = `
+                    .notification {
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        padding: 15px 20px;
+                        border-radius: 8px;
+                        color: white;
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        z-index: 10000;
+                        min-width: 300px;
+                        max-width: 400px;
+                        animation: slideIn 0.3s ease-out;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        font-weight: 500;
+                    }
+                    .notification-success { background: linear-gradient(135deg, #00ff88, #00cc6a); }
+                    .notification-error { background: linear-gradient(135deg, #ff4757, #c44569); }
+                    .notification-warning { background: linear-gradient(135deg, #ffc107, #f39c12); }
+                    .notification-info { background: linear-gradient(135deg, #17a2b8, #138496); }
+                    @keyframes slideIn {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                    .notification:hover {
+                        transform: translateX(-5px);
+                        transition: transform 0.2s ease;
+                    }
+                `;
+                document.head.appendChild(styles);
+            }
+
+            // Stack notifications
+            const existingNotifications = document.querySelectorAll('.notification');
+            if (existingNotifications.length > 0) {
+                const lastNotification = existingNotifications[existingNotifications.length - 1];
+                const rect = lastNotification.getBoundingClientRect();
+                notification.style.top = (rect.bottom + 10) + 'px';
+            }
+
+            document.body.appendChild(notification);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.style.animation = 'slideOut 0.3s ease-in forwards';
+                    notification.addEventListener('animationend', () => {
+                        if (notification.parentElement) {
+                            notification.remove();
+                        }
+                    });
+                }
+            }, 5000);
+
+            // Add slide out animation
+            const slideOutKeyframes = `
+                @keyframes slideOut {
+                    to { 
+                        transform: translateX(100%); 
+                        opacity: 0; 
+                    }
+                }
+            `;
+            
+            if (!document.getElementById('slideout-animation')) {
+                const slideOutStyle = document.createElement('style');
+                slideOutStyle.id = 'slideout-animation';
+                slideOutStyle.textContent = slideOutKeyframes;
+                document.head.appendChild(slideOutStyle);
+            }
+        }
+
+        // Utility Functions
+        function formatStarAmount(amount) {
+            return new Intl.NumberFormat().format(amount);
+        }
+
+        function calculateUSDValue(stars) {
+            const rate = 0.01; // $0.01 per star (this would come from settings)
+            return (stars * rate).toFixed(2);
+        }
+
+        function validateStarTransaction(amount, type) {
+            const minAmount = type === 'deposit' ? 100 : 500;
+            const maxAmount = type === 'deposit' ? 1000000 : 100000;
+            
+            if (amount < minAmount) {
+                showNotification(`Minimum ${type} amount is ${formatStarAmount(minAmount)} stars`, 'error');
+                return false;
+            }
+            
+            if (amount > maxAmount) {
+                showNotification(`Maximum ${type} amount is ${formatStarAmount(maxAmount)} stars`, 'error');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Star Management System initialized');
+            showNotification('Star Management System Ready', 'success');
+        });
+    </script>
 </body>
 </html>
