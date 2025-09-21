@@ -818,6 +818,53 @@
         .hidden {
             display: none !important;
         }
+
+        /* Quick Actions Button */
+        .quick-actions-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #00d4ff, #00ff88);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 64px;
+            height: 64px;
+            font-size: 32px;
+            box-shadow: 0 8px 32px #00d4ff55;
+            cursor: pointer;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .quick-actions-btn:hover {
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+        }
+
+        /* Quick Actions Menu */
+        #quickActionsMenu {
+            display: none;
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            background: rgba(26, 31, 46, 0.98);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px #0004;
+            padding: 20px;
+            z-index: 9999;
+        }
+
+        #quickActionsMenu h4 {
+            margin-bottom: 12px;
+        }
+
+        #quickActionsMenu .btn {
+            width: 100%;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
@@ -973,21 +1020,6 @@
                     <div class="action-badge">Live Feed</div>
                 </div>
 
-                <!-- Support & Communication -->
-                <div class="action-card primary" onclick="openModal('supportModal')">
-                    <div class="action-icon"><i class="fas fa-headset"></i></div>
-                    <div class="action-title">Support Center</div>
-                    <div class="action-desc">Handle tickets and live chat</div>
-                    <div class="action-badge" id="openTickets">12 Open</div>
-                </div>
-
-                <div class="action-card info" onclick="openModal('notificationsModal')">
-                    <div class="action-icon"><i class="fas fa-bullhorn"></i></div>
-                    <div class="action-title">Notifications</div>
-                    <div class="action-desc">Send announcements to players</div>
-                    <div class="action-badge">Broadcast</div>
-                </div>
-
                 <!-- Analytics & Reports -->
                 <div class="action-card success" onclick="openModal('analyticsModal')">
                     <div class="action-icon"><i class="fas fa-chart-pie"></i></div>
@@ -1032,22 +1064,6 @@
                     <div class="action-title">Fraud Protection</div>
                     <div class="action-desc">Advanced anti-fraud & spam detection</div>
                     <div class="action-badge" id="fraudAlerts">3 Alerts</div>
-                </div>
-
-                <!-- Enhanced Support -->
-                <div class="action-card success" onclick="openModal('ticketSystemModal')">
-                    <div class="action-icon"><i class="fas fa-ticket-alt"></i></div>
-                    <div class="action-title">Support Tickets</div>
-                    <div class="action-desc">Advanced ticket management system</div>
-                    <div class="action-badge" id="activeTickets">15 Active</div>
-                </div>
-
-                <!-- System Management -->
-                <div class="action-card secondary" onclick="openModal('systemModal')">
-                    <div class="action-icon"><i class="fas fa-server"></i></div>
-                    <div class="action-title">System Control</div>
-                    <div class="action-desc">Server and system management</div>
-                    <div class="action-badge" id="systemHealth">Healthy</div>
                 </div>
             </div>
         </div>
@@ -1512,74 +1528,6 @@
     <div id="fraudProtectionModal" class="modal">
         <div class="modal-content modal-content-large">
             <div class="modal-header">
-                <h3 class="modal-title"><i class="fas fa-shield-virus"></i> Fraud Protection Center</h3>
-                <button class="modal-close" onclick="closeModal('fraudProtectionModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="modal-tabs">
-                    <button class="modal-tab active" onclick="switchTab('fraud-alerts')">Active Alerts</button>
-                    <button class="modal-tab" onclick="switchTab('fraud-rules')">Protection Rules</button>
-                    <button class="modal-tab" onclick="switchTab('spam-detection')">Spam Detection</button>
-                    <button class="modal-tab" onclick="switchTab('risk-analysis')">Risk Analysis</button>
-                </div>
-
-                <div id="fraud-alerts" class="tab-content active">
-                    <h4 style="margin-bottom: 20px;">Active Fraud Alerts</h4>
-                    
-                    <div class="dashboard-grid" style="margin-bottom: 20px;">
-                        <div class="dashboard-card">
-                            <div class="card-header">
-                                <div class="card-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                                <div class="card-title">High Risk Alerts</div>
-                            </div>
-                            <div class="card-value" id="highRiskAlerts">3</div>
-                            <div class="card-subtitle">Require immediate action</div>
-                        </div>
-                        <div class="dashboard-card">
-                            <div class="card-header">
-                                <div class="card-icon"><i class="fas fa-eye"></i></div>
-                                <div class="card-title">Under Review</div>
-                            </div>
-                            <div class="card-value" id="underReview">8</div>
-                            <div class="card-subtitle">Accounts being monitored</div>
-                        </div>
-                        <div class="dashboard-card">
-                            <div class="card-header">
-                                <div class="card-icon"><i class="fas fa-ban"></i></div>
-                                <div class="card-title">Blocked Today</div>
-                            </div>
-                            <div class="card-value" id="blockedToday">12</div>
-                            <div class="card-subtitle">Fraudulent accounts</div>
-                        </div>
-                    </div>
-
-                    <!-- High Priority Alerts -->
-                    <div class="list-item" style="border-left: 4px solid #ff4757;">
-                        <div class="list-item-header">
-                            <div class="list-item-title">🚨 Multi-Account Fraud Detection</div>
-                            <div class="list-item-status" style="background: rgba(255, 71, 87, 0.2); color: #ff4757;">Critical</div>
-                        </div>
-                        <div class="list-item-details">
-                            <strong>Pattern:</strong> 15 accounts registered from same IP (192.168.1.100)<br>
-                            <strong>Behavior:</strong> All accounts making minimum deposits, coordinated betting<br>
-                            <strong>Risk Score:</strong> 95/100<br>
-                            <strong>Detected:</strong> 2 hours ago
-                        </div>
-                        <div class="list-item-actions">
-                            <button class="btn btn-danger" onclick="blockFraudNetwork('net001')">
-                                <i class="fas fa-ban"></i> Block All
-                            </button>
-                            <button class="btn btn-warning" onclick="investigateFraud('net001')">
-                                <i class="fas fa-search"></i> Investigate
-                            </button>
-                            <button class="btn btn-primary" onclick="viewFraudDetails('net001')">
-                                <i class="fas fa-info"></i> Details
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="list-item" style="border-left: 4px solid #ffc107;">
-                        <div class="list-item-header">
                             <div class="list-item-title">⚠️ Suspicious Betting Pattern</div>
                             <div class="list-item-status" style="background: rgba(255, 193, 7, 0.2); color: #ffc107;">High Risk</div>
                         </div>
@@ -1806,280 +1754,6 @@ cheat</textarea>
                             </tr>
                         </tbody>
                     </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Enhanced Support Ticket System -->
-    <div id="ticketSystemModal" class="modal">
-        <div class="modal-content modal-content-large">
-            <div class="modal-header">
-                <h3 class="modal-title"><i class="fas fa-ticket-alt"></i> Advanced Support Ticket System</h3>
-                <button class="modal-close" onclick="closeModal('ticketSystemModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="modal-tabs">
-                    <button class="modal-tab active" onclick="switchTab('active-tickets')">Active Tickets</button>
-                    <button class="modal-tab" onclick="switchTab('priority-queue')">Priority Queue</button>
-                    <button class="modal-tab" onclick="switchTab('templates')">Templates</button>
-                    <button class="modal-tab" onclick="switchTab('analytics')">Analytics</button>
-                </div>
-
-                <div id="active-tickets" class="tab-content active">
-                    <div class="dashboard-grid" style="margin-bottom: 20px;">
-                        <div class="dashboard-card">
-                            <div class="card-header">
-                                <div class="card-icon"><i class="fas fa-clock"></i></div>
-                                <div class="card-title">Open Tickets</div>
-                            </div>
-                            <div class="card-value" id="openTicketsCount">15</div>
-                            <div class="card-subtitle">Awaiting response</div>
-                        </div>
-                        <div class="dashboard-card">
-                            <div class="card-header">
-                                <div class="card-icon"><i class="fas fa-bolt"></i></div>
-                                <div class="card-title">Avg Response</div>
-                            </div>
-                            <div class="card-value" id="avgResponse">12m</div>
-                            <div class="card-subtitle">Average response time</div>
-                        </div>
-                        <div class="dashboard-card">
-                            <div class="card-header">
-                                <div class="card-icon"><i class="fas fa-smile"></i></div>
-                                <div class="card-title">Satisfaction</div>
-                            </div>
-                            <div class="card-value" id="satisfaction">94%</div>
-                            <div class="card-subtitle">Customer satisfaction</div>
-                        </div>
-                    </div>
-
-                    <!-- Ticket List -->
-                    <div class="list-item" style="border-left: 4px solid #ff4757;">
-                        <div class="list-item-header">
-                            <div class="list-item-title">Ticket #2024-001 - Missing Stars After Deposit</div>
-                            <div class="list-item-status" style="background: rgba(255, 71, 87, 0.2); color: #ff4757;">Urgent</div>
-                        </div>
-                        <div class="list-item-details">
-                            <strong>From:</strong> @frustrated_user<br>
-                            <strong>Category:</strong> Payment Issues<br>
-                            <strong>Message:</strong> "I deposited $50 but didn't receive my 5,000 stars. Transaction ID: TXN789"<br>
-                            <strong>Created:</strong> 2 hours ago<br>
-                            <strong>Last Reply:</strong> 45 minutes ago (Customer)
-                        </div>
-                        <div class="list-item-actions">
-                            <button class="btn btn-success" onclick="quickReply('ticket001', 'deposit_resolved')">
-                                <i class="fas fa-magic"></i> Quick Fix
-                            </button>
-                            <button class="btn btn-primary" onclick="openTicketChat('ticket001')">
-                                <i class="fas fa-comments"></i> Open Chat
-                            </button>
-                            <button class="btn btn-warning" onclick="escalateTicket('ticket001')">
-                                <i class="fas fa-arrow-up"></i> Escalate
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="list-item" style="border-left: 4px solid #ffc107;">
-                        <div class="list-item-header">
-                            <div class="list-item-title">Ticket #2024-002 - Account Verification Issues</div>
-                            <div class="list-item-status" style="background: rgba(255, 193, 7, 0.2); color: #ffc107;">High</div>
-                        </div>
-                        <div class="list-item-details">
-                            <strong>From:</strong> @new_player<br>
-                            <strong>Category:</strong> Account Issues<br>
-                            <strong>Message:</strong> "Can't withdraw stars, system says account needs verification but I uploaded documents"<br>
-                            <strong>Created:</strong> 4 hours ago<br>
-                            <strong>Last Reply:</strong> 30 minutes ago (Admin)
-                        </div>
-                        <div class="list-item-actions">
-                            <button class="btn btn-success" onclick="verifyAccount('ticket002')">
-                                <i class="fas fa-check"></i> Verify Account
-                            </button>
-                            <button class="btn btn-primary" onclick="openTicketChat('ticket002')">
-                                <i class="fas fa-comments"></i> Continue Chat
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="list-item" style="border-left: 4px solid #17a2b8;">
-                        <div class="list-item-header">
-                            <div class="list-item-title">Ticket #2024-003 - Game Rules Question</div>
-                            <div class="list-item-status" style="background: rgba(23, 162, 184, 0.2); color: #17a2b8;">Normal</div>
-                        </div>
-                        <div class="list-item-details">
-                            <strong>From:</strong> @curious_player<br>
-                            <strong>Category:</strong> General Inquiry<br>
-                            <strong>Message:</strong> "How does the auto-cashout feature work? Can I set multiple cashout points?"<br>
-                            <strong>Created:</strong> 1 hour ago<br>
-                            <strong>Status:</strong> Awaiting admin response
-                        </div>
-                        <div class="list-item-actions">
-                            <button class="btn btn-success" onclick="useTemplate('ticket003', 'auto_cashout_guide')">
-                                <i class="fas fa-file-alt"></i> Use Template
-                            </button>
-                            <button class="btn btn-primary" onclick="openTicketChat('ticket003')">
-                                <i class="fas fa-comments"></i> Reply
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="list-item-actions" style="margin-top: 20px;">
-                        <button class="btn btn-success" onclick="createNewTicket()">
-                            <i class="fas fa-plus"></i> Create Ticket
-                        </button>
-                        <button class="btn btn-primary" onclick="bulkActions()">
-                            <i class="fas fa-tasks"></i> Bulk Actions
-                        </button>
-                        <button class="btn btn-warning" onclick="exportTickets()">
-                            <i class="fas fa-download"></i> Export
-                        </button>
-                    </div>
-                </div>
-
-                <div id="priority-queue" class="tab-content">
-                    <h4 style="margin-bottom: 20px;">Priority Queue Management</h4>
-                    
-                    <div class="form-row" style="margin-bottom: 20px;">
-                        <div class="form-col">
-                            <label class="form-label">Auto-Priority Rules</label>
-                            <select class="form-select" id="priorityRules">
-                                <option value="enabled">Enabled</option>
-                                <option value="manual">Manual Only</option>
-                                <option value="disabled">Disabled</option>
-                            </select>
-                        </div>
-                        <div class="form-col">
-                            <label class="form-label">VIP Fast Track</label>
-                            <select class="form-select" id="vipFastTrack">
-                                <option value="enabled">Enabled</option>
-                                <option value="disabled">Disabled</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Priority Rules -->
-                    <div class="list-item">
-                        <div class="list-item-header">
-                            <div class="list-item-title">Payment Issues → Urgent Priority</div>
-                            <div class="list-item-status status-approved">Active</div>
-                        </div>
-                        <div class="list-item-details">
-                            Keywords: deposit, withdrawal, payment, missing stars, transaction<br>
-                            Auto-escalate: After 30 minutes without response
-                        </div>
-                        <div class="list-item-actions">
-                            <button class="btn btn-primary" onclick="editPriorityRule('payment')">Edit</button>
-                        </div>
-                    </div>
-
-                    <div class="list-item">
-                        <div class="list-item-header">
-                            <div class="list-item-title">VIP Players → High Priority</div>
-                            <div class="list-item-status status-approved">Active</div>
-                        </div>
-                        <div class="list-item-details">
-                            All tickets from VIP tier players automatically get high priority<br>
-                            Target response time: &lt; 5 minutes
-                        </div>
-                        <div class="list-item-actions">
-                            <button class="btn btn-primary" onclick="editPriorityRule('vip')">Edit</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="templates" class="tab-content">
-                    <h4 style="margin-bottom: 20px;">Response Templates</h4>
-                    
-                    <div class="list-item">
-                        <div class="list-item-header">
-                            <div class="list-item-title">Deposit Processing Delay</div>
-                            <div class="list-item-status status-approved">Active</div>
-                        </div>
-                        <div class="list-item-details">
-                            <strong>Template:</strong> "We apologize for the delay. Your deposit is being processed and stars will be credited within 24 hours. Transaction ID: {transaction_id}"
-                        </div>
-                        <div class="list-item-actions">
-                            <button class="btn btn-primary" onclick="editTemplate('deposit_delay')">Edit</button>
-                            <button class="btn btn-success" onclick="useTemplate('deposit_delay')">Use</button>
-                        </div>
-                    </div>
-
-                    <div class="list-item">
-                        <div class="list-item-header">
-                            <div class="list-item-title">Account Verification Guide</div>
-                            <div class="list-item-status status-approved">Active</div>
-                        </div>
-                        <div class="list-item-details">
-                            <strong>Template:</strong> Comprehensive guide for account verification process with step-by-step instructions
-                        </div>
-                        <div class="list-item-actions">
-                            <button class="btn btn-primary" onclick="editTemplate('verification_guide')">Edit</button>
-                            <button class="btn btn-success" onclick="useTemplate('verification_guide')">Use</button>
-                        </div>
-                    </div>
-
-                    <div class="list-item">
-                        <div class="list-item-header">
-                            <div class="list-item-title">Auto-Cashout Explanation</div>
-                            <div class="list-item-status status-approved">Active</div>
-                        </div>
-                        <div class="list-item-details">
-                            <strong>Template:</strong> Detailed explanation of how auto-cashout feature works with examples
-                        </div>
-                        <div class="list-item-actions">
-                            <button class="btn btn-primary" onclick="editTemplate('auto_cashout_guide')">Edit</button>
-                            <button class="btn btn-success" onclick="useTemplate('auto_cashout_guide')">Use</button>
-                        </div>
-                    </div>
-
-                    <div class="list-item-actions" style="margin-top: 20px;">
-                        <button class="btn btn-success" onclick="createNewTemplate()">
-                            <i class="fas fa-plus"></i> New Template
-                        </button>
-                        <button class="btn btn-primary" onclick="importTemplates()">
-                            <i class="fas fa-upload"></i> Import Templates
-                        </button>
-                    </div>
-                </div>
-
-                <div id="analytics" class="tab-content">
-                    <h4 style="margin-bottom: 20px;">Support Analytics</h4>
-                    
-                    <div class="dashboard-grid" style="margin-bottom: 20px;">
-                        <div class="dashboard-card">
-                            <div class="card-header">
-                                <div class="card-icon"><i class="fas fa-ticket-alt"></i></div>
-                                <div class="card-title">Tickets Today</div>
-                            </div>
-                            <div class="card-value" id="ticketsToday">47</div>
-                            <div class="card-subtitle">+12% from yesterday</div>
-                        </div>
-                        <div class="dashboard-card">
-                            <div class="card-header">
-                                <div class="card-icon"><i class="fas fa-clock"></i></div>
-                                <div class="card-title">Avg Resolution</div>
-                            </div>
-                            <div class="card-value" id="avgResolution">2.5h</div>
-                            <div class="card-subtitle">15% faster than last week</div>
-                        </div>
-                        <div class="dashboard-card">
-                            <div class="card-header">
-                                <div class="card-icon"><i class="fas fa-thumbs-up"></i></div>
-                                <div class="card-title">First Contact Resolution</div>
-                            </div>
-                            <div class="card-value" id="firstContactRes">78%</div>
-                            <div class="card-subtitle">Resolved on first reply</div>
-                        </div>
-                    </div>
-
-                    <div class="chart-container">
-                        <div style="color: rgba(255,255,255,0.7);">
-                            <i class="fas fa-chart-bar" style="font-size: 32px; margin-bottom: 10px;"></i><br>
-                            Ticket Volume & Response Times<br>
-                            <small>Last 30 days performance metrics</small>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -2743,127 +2417,6 @@ cheat</textarea>
 
         function viewProfile(userId) {
             showNotification(`Loading profile for ${userId}`, 'info');
-        }
-
-        // Support Ticket Functions
-        function quickReply(ticketId, templateId) {
-            const data = {
-                action: 'quick_reply_ticket',
-                ticketId: ticketId,
-                templateId: templateId,
-                timestamp: new Date().toISOString()
-            };
-
-            try {
-                socket.emit('admin_action', data);
-            } catch (e) {
-                console.log('Demo mode: Quick reply simulated');
-            }
-            
-            showNotification(`Quick reply sent for ticket ${ticketId}`, 'success');
-        }
-
-        function openTicketChat(ticketId) {
-            showNotification(`Opening chat for ticket ${ticketId}`, 'info');
-        }
-
-        function escalateTicket(ticketId) {
-            const data = {
-                action: 'escalate_ticket',
-                ticketId: ticketId,
-                timestamp: new Date().toISOString()
-            };
-
-            try {
-                socket.emit('admin_action', data);
-            } catch (e) {
-                console.log('Demo mode: Ticket escalation simulated');
-            }
-            
-            showNotification(`Ticket ${ticketId} escalated to supervisor`, 'warning');
-        }
-
-        function verifyAccount(ticketId) {
-            const data = {
-                action: 'verify_account_from_ticket',
-                ticketId: ticketId,
-                timestamp: new Date().toISOString()
-            };
-
-            try {
-                socket.emit('admin_action', data);
-            } catch (e) {
-                console.log('Demo mode: Account verification simulated');
-            }
-            
-            showNotification('Account verification completed', 'success');
-        }
-
-        function useTemplate(ticketId, templateId) {
-            const data = {
-                action: 'use_template_reply',
-                ticketId: ticketId,
-                templateId: templateId || 'default',
-                timestamp: new Date().toISOString()
-            };
-
-            try {
-                socket.emit('admin_action', data);
-            } catch (e) {
-                console.log('Demo mode: Template reply simulated');
-            }
-            
-            showNotification(`Template reply sent for ticket ${ticketId}`, 'success');
-        }
-
-        function createNewTicket() {
-            showNotification('Opening new ticket creation form', 'info');
-        }
-
-        function bulkActions() {
-            showNotification('Opening bulk actions panel', 'info');
-        }
-
-        function exportTickets() {
-            showNotification('Preparing ticket export...', 'info');
-        }
-
-        function createNewRule() {
-            showNotification('Opening new fraud rule creation form', 'info');
-        }
-
-        function importRuleTemplate() {
-            showNotification('Opening rule template import dialog', 'info');
-        }
-
-        function editRule(ruleId) {
-            showNotification(`Editing fraud protection rule: ${ruleId}`, 'info');
-        }
-
-        function disableRule(ruleId) {
-            if (confirm(`Disable fraud protection rule: ${ruleId}?`)) {
-                showNotification(`Fraud rule ${ruleId} disabled`, 'warning');
-            }
-        }
-
-        function reviewSpamLog() {
-            showNotification('Opening spam detection log', 'info');
-        }
-
-        function editPriorityRule(ruleType) {
-            showNotification(`Editing priority rule: ${ruleType}`, 'info');
-        }
-
-        function editTemplate(templateId) {
-            showNotification(`Editing template: ${templateId}`, 'info');
-        }
-
-        function createNewTemplate() {
-            showNotification('Creating new response template', 'info');
-        }
-
-        function importTemplates() {
-            showNotification('Importing response templates', 'info');
         }
 
         // UI Update Functions
