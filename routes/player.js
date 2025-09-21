@@ -1,150 +1,151 @@
+// Fixed admin authentication in routes/admin.js - replace the existing auth functions
+
 import express from 'express';
-import { User, Withdraw, Deposit, Transaction } from '../db/database.js';
+import jwt from 'jsonwebtoken';
+import { User, Withdraw, Deposit, Transaction, GameRound } from '../db/database.js';
 
 const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
+const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin123';
 
-// register/upsert user
-router.post('/register', async (req, res) => {
+function adminAuth(req, res, next) {
   try {
-    const { telegramId, username, firstName, lastName } = req.body;
-    if (!telegramId) return res.status(400).json({ ok: false, error: 'telegramId required' });
-
-    let user = await User.findOne({ telegramId });
-    if (!user) {
-      user = await User.create({ telegramId, username, firstName, lastName });
-    } else {
-      user.username = username || user.username;
-      user.firstName = firstName || user.firstName;
-      user.lastName = lastName || user.lastName;
-      user.lastActive = new Date();
-      await user.save();
+    const authHeader = req.headers.authorization;
+    const token = req.query.token || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null);
+    
+    if (!token) {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'Access denied. No token provided.' 
+      });
     }
-    res.json({ ok: true, user });
+    
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (!decoded || decoded.role !== 'admin') {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Access denied. Admin privileges required.' 
+      });
+    }
+    
+    req.admin = decoded;
+    next();
   } catch (err) {
-    console.error('register error', err);
-    res.status(500).json({ ok: false, error: 'server_error' });
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'Invalid token.' 
+      });
+    }
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'Token expired.' 
+      });
+    }
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Token verification failed.' 
+    });
+  }
+}
+
+// Admin login with proper validation
+router.post('/login', async (req, res) => {
+  try {
+    const { secret } = req.body;
+    
+    if (!secret) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Admin secret is required' 
+      });
+    }
+    
+    if (secret !== ADMIN_SECRET) {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'Invalid admin credentials' 
+      });
+    }
+    
+    const token = jwt.sign(
+      { 
+        role: 'admin', 
+        name: 'admin',
+        loginTime: Date.now()
+      }, 
+      JWT_SECRET, 
+      { expiresIn: '24h' }
+    );
+    
+    res.json({ 
+      success: true, 
+      token,
+      message: 'Admin login successful',
+      expiresIn: '24h'
+    });
+    
+  } catch (err) {
+    console.error('Admin login error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Server error during login' 
+    });
   }
 });
 
-// profile
-router.get('/profile/:id', async (req, res) => {
-  try {
-    const telegramId = Number(req.params.id);
-    const user = await User.findOne({ telegramId });
-    if (!user) return res.status(404).json({ ok: false, error: 'not_found' });
-    res.json({ ok: true, user });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: 'server_error' });
-  }
+// Verify token endpoint
+router.get('/verify', adminAuth, (req, res) => {
+  res.json({ 
+    success: true, 
+    admin: {
+      role: req.admin.role,
+      name: req.admin.name,
+      loginTime: req.admin.loginTime
+    },
+    message: 'Token is valid' 
+  });
 });
 
-// bet (REST)
-router.post('/bet', async (req, res) => {
+// Dashboard stats
+router.get('/stats', adminAuth, async (req, res) => {
   try {
-    const { telegramId, amount } = req.body;
-    if (!telegramId || !amount) return res.status(400).json({ ok: false, error: 'invalid' });
+    const [
+      totalUsers,
+      totalBets,
+      totalWagered,
+      pendingWithdraws,
+      pendingDeposits,
+      recentRounds
+    ] = await Promise.all([
+      User.countDocuments(),
+      Transaction.countDocuments({ type: 'bet' }),
+      Transaction.aggregate([
+        { $match: { type: 'bet' } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]),
+      Withdraw.countDocuments({ status: 'pending' }),
+      Deposit.countDocuments({ status: 'pending' }),
+      GameRound.find().sort({ createdAt: -1 }).limit(10).lean()
+    ]);
 
-    const user = await User.findOne({ telegramId });
-    if (!user) return res.status(404).json({ ok: false, error: 'user_not_found' });
-    if (user.isBanned) return res.status(403).json({ ok: false, error: 'banned' });
-    if (amount > user.balance) return res.status(400).json({ ok: false, error: 'insufficient' });
-
-    user.balance -= amount;
-    user.totalBets = (user.totalBets || 0) + 1;
-    user.totalWagered = (user.totalWagered || 0) + amount;
-    await user.save();
-
-    await Transaction.create({ userId: user._id, type: 'bet', amount, meta: {} });
-
-    res.json({ ok: true, balance: user.balance });
+    res.json({
+      success: true,
+      stats: {
+        totalUsers,
+        totalBets,
+        totalWagered: totalWagered[0]?.total || 0,
+        pendingWithdraws,
+        pendingDeposits,
+        recentRounds: recentRounds.length
+      }
+    });
   } catch (err) {
-    console.error('bet error', err);
-    res.status(500).json({ ok: false, error: 'server_error' });
-  }
-});
-
-// cashout (REST)
-router.post('/cashout', async (req, res) => {
-  try {
-    const { telegramId, payout } = req.body;
-    if (!telegramId || payout == null) return res.status(400).json({ ok: false, error: 'invalid' });
-
-    const user = await User.findOne({ telegramId });
-    if (!user) return res.status(404).json({ ok: false, error: 'not_found' });
-
-    user.balance = (user.balance || 0) + Number(payout);
-    await user.save();
-
-    await Transaction.create({ userId: user._id, type: 'cashout', amount: payout, meta: {} });
-
-    res.json({ ok: true, balance: user.balance });
-  } catch (err) {
-    console.error('cashout error', err);
-    res.status(500).json({ ok: false, error: 'server_error' });
-  }
-});
-
-// withdraw request
-router.post('/withdraw', async (req, res) => {
-  try {
-    const { telegramId, amount, method, reference } = req.body;
-    if (!telegramId || !amount) return res.status(400).json({ ok: false, error: 'invalid' });
-    const user = await User.findOne({ telegramId });
-    if (!user) return res.status(404).json({ ok: false, error: 'user_not_found' });
-    if (user.balance < amount) return res.status(400).json({ ok: false, error: 'insufficient' });
-
-    user.balance -= amount;
-    await user.save();
-
-    const withdraw = await Withdraw.create({ userId: user._id, amount, method, reference });
-    await Transaction.create({ userId: user._id, type: 'withdraw_request', amount, meta: { withdrawId: withdraw._id } });
-
-    res.json({ ok: true, message: 'withdraw_requested', request: withdraw });
-  } catch (err) {
-    console.error('withdraw error', err);
-    res.status(500).json({ ok: false, error: 'server_error' });
-  }
-});
-
-// deposit request
-router.post('/deposit', async (req, res) => {
-  try {
-    const { telegramId, amount, reference } = req.body;
-    if (!telegramId || !amount) return res.status(400).json({ ok: false, error: 'invalid' });
-    const user = await User.findOne({ telegramId });
-    if (!user) return res.status(404).json({ ok: false, error: 'user_not_found' });
-
-    const deposit = await Deposit.create({ userId: user._id, amount, reference });
-    await Transaction.create({ userId: user._id, type: 'deposit_request', amount, meta: { depositId: deposit._id } });
-
-    res.json({ ok: true, message: 'deposit_requested', request: deposit });
-  } catch (err) {
-    console.error('deposit error', err);
-    res.status(500).json({ ok: false, error: 'server_error' });
-  }
-});
-
-// history
-router.get('/history/:telegramId', async (req, res) => {
-  try {
-    const telegramId = Number(req.params.telegramId);
-    const user = await User.findOne({ telegramId });
-    if (!user) return res.status(404).json({ ok: false, error: 'user_not_found' });
-    const tx = await Transaction.find({ userId: user._id }).sort({ createdAt: -1 }).limit(200).lean();
-    res.json({ ok: true, history: tx });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: 'server_error' });
-  }
-});
-
-// leaderboard
-router.get('/leaderboard', async (req, res) => {
-  try {
-    const top = await User.find().sort({ totalWon: -1 }).limit(10).select('username telegramId totalWon balance').lean();
-    res.json({ ok: true, leaderboard: top });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: 'server_error' });
+    console.error('Admin stats error:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch stats' });
   }
 });
 
 export default router;
+export { adminAuth };

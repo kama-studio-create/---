@@ -1,4 +1,3 @@
-// Enhanced GameEngine.js with dynamic, unpredictable gameplay
 import { generateServerSeed, computeCrashMultiplier, hashServerSeed } from './ProvablyFair.js';
 import { v4 as uuidv4 } from 'uuid';
 import { User, Transaction, GameRound } from '../db/database.js';
@@ -9,15 +8,15 @@ class GameEngine {
     this.running = false;
     this.round = null;
     this.betPhaseDuration = Number(process.env.BET_PHASE_DURATION) || 5000;
-    this.updateIntervalMs = 50; // Faster updates for smoother experience
+    this.updateIntervalMs = 50;
     this.activeBets = new Map();
     this.gameState = 'waiting';
     
     // Dynamic game parameters
-    this.baseMultiplierSpeed = 0.02; // Base speed
-    this.maxMultiplier = 100; // Maximum possible multiplier
-    this.minGameDuration = 2000; // Minimum 2 seconds
-    this.maxGameDuration = 120000; // Maximum 2 minutes
+    this.baseMultiplierSpeed = 0.02;
+    this.maxMultiplier = 100;
+    this.minGameDuration = 2000;
+    this.maxGameDuration = 120000;
     
     // Statistics tracking
     this.roundStats = {
@@ -26,101 +25,92 @@ class GameEngine {
       recentMultipliers: []
     };
 
-    this.setupSocketHandlers();
-  }
+    console.log('🎮 GameEngine initialized');
+}
 
   setupSocketHandlers() {
-    this.io.on('connection', socket => this.handleSocket(socket));
+    this.io.on('connection', socket => {
+        console.log('🎮 Game client connected:', socket.id);
+        this.handleSocket(socket);
+    });
   }
 
   handleSocket(socket) {
-    // Send current game state to new connections
-    socket.emit('game:state', {
-      state: this.gameState,
-      multiplier: this.round?.currentMultiplier || 1.00,
-      roundId: this.round?.id,
-      timeRemaining: this.round?.timeRemaining || 0
-    });
-
     socket.on('placeBet', async (data) => {
       try {
         const { telegramId, amount, clientSeed } = data;
-        
-        if (this.gameState !== 'betting') {
-          return socket.emit('error', { code: 'INVALID_PHASE', message: 'Betting phase not active' });
+        if (!this.round || this.round.phase !== 'betting') {
+          return socket.emit('error', 'no_betting_phase');
         }
-        
-        if (!telegramId || !amount || amount < 1) {
-          return socket.emit('error', { code: 'INVALID_BET', message: 'Invalid bet parameters' });
+        if (!telegramId || !amount) {
+          return socket.emit('error', 'invalid_bet');
         }
 
-        // Check if user already has a bet
-        if (this.activeBets.has(String(telegramId))) {
-          return socket.emit('error', { code: 'EXISTING_BET', message: 'You already have an active bet' });
-        }
-
-        // Validate user and balance
-        const user = await User.findOne({ telegramId });
+        // Validate user and balance in database
+        const user = await User.findOne({ telegramId: Number(telegramId) });
         if (!user) {
-          return socket.emit('error', { code: 'USER_NOT_FOUND', message: 'User not found' });
+          return socket.emit('error', 'user_not_found');
         }
-
         if (user.isBanned) {
-          return socket.emit('error', { code: 'USER_BANNED', message: 'Account is banned' });
+          return socket.emit('error', 'user_banned');
         }
-
         if (user.balance < amount) {
-          return socket.emit('error', { code: 'INSUFFICIENT_FUNDS', message: 'Insufficient balance' });
+          return socket.emit('error', 'insufficient_balance');
         }
 
-        // Deduct bet amount
+        const minBet = Number(process.env.MIN_BET) || 10;
+        const maxBet = Number(process.env.MAX_BET) || 10000;
+        if (amount < minBet || amount > maxBet) {
+          return socket.emit('error', 'invalid_bet_amount');
+        }
+
+        // Check if user already has a bet in this round
+        if (this.activeBets.has(String(telegramId))) {
+          return socket.emit('error', 'already_has_bet');
+        }
+
+        // Deduct balance and update user
         user.balance -= amount;
         user.totalBets = (user.totalBets || 0) + 1;
         user.totalWagered = (user.totalWagered || 0) + amount;
         await user.save();
 
         // Record bet transaction
-        await Transaction.create({
-          userId: user._id,
-          type: 'bet',
-          amount: amount,
-          meta: { roundId: this.round.id, clientSeed: clientSeed || '' }
+        await Transaction.create({ 
+          userId: user._id, 
+          type: 'bet', 
+          amount, 
+          meta: { roundId: this.round.id } 
         });
 
-        // Store active bet
-        const bet = {
-          telegramId,
-          userId: user._id,
-          amount,
-          clientSeed: clientSeed || '',
-          placedAt: Date.now(),
-          cashedOut: false,
+        const bet = { 
+          telegramId, 
+          amount, 
+          clientSeed: clientSeed || '', 
+          placedAt: Date.now(), 
+          cashedOut: false, 
           payout: 0,
-          username: user.username || `User${telegramId}`,
-          firstName: user.firstName || 'Player'
+          userId: user._id
         };
-
+        
         this.activeBets.set(String(telegramId), bet);
-
-        // Notify all clients
-        this.io.emit('game:betPlaced', {
-          telegramId,
-          amount,
-          username: bet.username,
-          firstName: bet.firstName,
-          totalBets: this.activeBets.size
+        
+        // Emit bet placed to all clients
+        this.io.emit('game:betPlaced', { 
+          telegramId, 
+          amount, 
+          username: user.username || user.firstName 
         });
 
-        // Confirm to user
-        socket.emit('bet:confirmed', {
-          amount,
-          newBalance: user.balance,
-          roundId: this.round.id
+        // Send success response to the betting user
+        socket.emit('betPlaced', { 
+          success: true, 
+          newBalance: user.balance 
         });
 
       } catch (err) {
-        console.error('Bet error:', err);
-        socket.emit('error', { code: 'SERVER_ERROR', message: 'Failed to place bet' });
+        console.error('Place bet error:', err);
+        socket.emit('error', 'server_error');
       }
     });
 
@@ -128,81 +118,77 @@ class GameEngine {
       try {
         const { telegramId } = data;
         const bet = this.activeBets.get(String(telegramId));
-        
         if (!bet) {
-          return socket.emit('error', { code: 'NO_ACTIVE_BET', message: 'No active bet found' });
+          return socket.emit('error', 'no_active_bet');
         }
-        
         if (bet.cashedOut) {
-          return socket.emit('error', { code: 'ALREADY_CASHED', message: 'Already cashed out' });
+          return socket.emit('error', 'already_cashed');
         }
-        
-        if (this.gameState !== 'flying') {
-          return socket.emit('error', { code: 'INVALID_PHASE', message: 'Cannot cash out now' });
+        if (!this.round || this.round.phase !== 'running') {
+          return socket.emit('error', 'not_running');
         }
 
         // Calculate payout
-        const multiplier = this.round.currentMultiplier;
-        const payout = Math.floor(bet.amount * multiplier);
+        const multiplier = this.round.currentMultiplier || 1;
+        const payout = Math.round(bet.amount * multiplier * 100) / 100;
         
         // Update bet status
         bet.cashedOut = true;
         bet.payout = payout;
-        bet.cashoutMultiplier = multiplier;
-        bet.cashedOutAt = Date.now();
+        bet.multiplier = multiplier;
+        this.activeBets.set(String(telegramId), bet);
 
-        // Update user balance
-        const user = await User.findOne({ telegramId });
+        // Update user balance in database
+        const user = await User.findOne({ telegramId: Number(telegramId) });
         if (user) {
-          user.balance += payout;
+          user.balance = (user.balance || 0) + payout;
           user.totalWon = (user.totalWon || 0) + payout;
           await user.save();
 
           // Record cashout transaction
-          await Transaction.create({
-            userId: user._id,
-            type: 'win',
-            amount: payout,
-            meta: {
-              roundId: this.round.id,
-              multiplier: multiplier,
-              betAmount: bet.amount
-            }
+          await Transaction.create({ 
+            userId: user._id, 
+            type: 'win', 
+            amount: payout, 
+            meta: { 
+              roundId: this.round.id, 
+              betAmount: bet.amount,
+              multiplier: multiplier
+            } 
+          });
+
+          // Emit cashout to all clients
+          this.io.emit('game:cashOut', { 
+            telegramId, 
+            payout,
+            multiplier,
+            username: user.username || user.firstName
+          });
+
+          // Send success response to the cashing out user
+          socket.emit('cashedOut', { 
+            success: true, 
+            payout, 
+            multiplier,
+            newBalance: user.balance 
           });
         }
 
-        // Notify all clients
-        this.io.emit('game:cashOut', {
-          telegramId,
-          username: bet.username,
-          firstName: bet.firstName,
-          payout,
-          multiplier: multiplier.toFixed(2),
-          betAmount: bet.amount
-        });
-
-        // Confirm to user
-        socket.emit('cashout:confirmed', {
-          payout,
-          multiplier: multiplier.toFixed(2),
-          newBalance: user.balance
-        });
-
       } catch (err) {
-        console.error('Cashout error:', err);
-        socket.emit('error', { code: 'SERVER_ERROR', message: 'Failed to cash out' });
+        console.error('Cash out error:', err);
+        socket.emit('error', 'server_error');
       }
     });
-
-    socket.on('disconnect', () => {
-      console.log('Client disconnected');
-    });
   }
-
+ 
   async startLoop() {
     if (this.running) return;
     this.running = true;
     console.log('🎮 Game engine started');
+    
+    // NOW attach socket handlers
+    this.setupSocketHandlers();
+    
     await this._startNewRound();
   }
 
@@ -264,7 +250,7 @@ class GameEngine {
   _startFlight() {
     if (!this.round || !this.running) return;
 
-    this.round.phase = 'flying';
+    this.round.phase = 'running';
     this.round.startTime = Date.now();
     this.gameState = 'flying';
 
@@ -356,10 +342,11 @@ class GameEngine {
         totalWagered: Array.from(this.activeBets.values()).reduce((sum, bet) => sum + bet.amount, 0)
       });
 
-      // Notify clients
+      // Notify clients with crashPoint property (frontend expects this)
       this.io.emit('game:crashed', {
         roundId: this.round.id,
         finalMultiplier: finalMultiplier,
+        crashPoint: finalMultiplier,
         serverSeed: this.round.serverSeed,
         duration: roundDuration,
         timestamp: this.round.endTime
