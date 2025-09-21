@@ -1339,93 +1339,72 @@
             }
         }
 
-        async function placeBet() {
-            const betAmount = parseInt(betAmountEl.value);
-            
-            if (gameState !== 'betting') {
-                showNotification('Wait for betting phase!', 'warning');
-                return;
-            }
-            
-            if (betAmount < 10 || betAmount > balance) {
-                showNotification('Invalid bet amount!', 'error');
-                return;
-            }
-            
-            if (hasBet) {
-                showNotification('You already have a bet placed!', 'warning');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/player/bet', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        telegramId: userTelegramId,
-                        amount: betAmount
-                    })
-                });
+        function placeBet() {
+  const betAmount = parseInt(betAmountEl.value);
 
-                const data = await response.json();
-                if (data.ok) {
-                    playerBet = betAmount;
-                    balance = data.balance;
-                    hasBet = true;
-                    
-                    playSound('bet');
-                    animateBetPlacement();
-                    updateDisplay();
-                    showNotification(`Bet placed: ${betAmount}⭐`, 'success');
-                } else {
-                    showNotification(data.error || 'Bet failed', 'error');
-                }
-            } catch (error) {
-                console.error('Bet error:', error);
-                showNotification('Bet failed', 'error');
-            }
-        }
+  if (gameState !== 'betting') {
+    showNotification('Wait for betting phase!', 'warning');
+    return;
+  }
 
-        async function cashout() {
-            if (gameState !== 'flying' || !hasBet) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/player/cashout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        telegramId: userTelegramId,
-                        payout: Math.floor(playerBet * currentMultiplier)
-                    })
-                });
+  if (betAmount < 10 || betAmount > balance) {
+    showNotification('Invalid bet amount!', 'error');
+    return;
+  }
 
-                const data = await response.json();
-                if (data.ok) {
-                    const winAmount = Math.floor(playerBet * currentMultiplier);
-                    balance = data.balance;
-                    totalBet += playerBet;
-                    totalWin += winAmount;
-                    
-                    playSound('win');
-                    animateWin();
-                    
-                    showNotification(`🎉 Won ${winAmount}⭐ at ${currentMultiplier.toFixed(2)}x!`, 'success');
-                    
-                    playerBet = 0;
-                    hasBet = false;
-                    updateDisplay();
-                    updateStats();
-                    loadTransactionHistory();
-                } else {
-                    showNotification(data.error || 'Cashout failed', 'error');
-                }
-            } catch (error) {
-                console.error('Cashout error:', error);
-                showNotification('Cashout failed', 'error');
-            }
-        }
+  if (hasBet) {
+    showNotification('You already have a bet placed!', 'warning');
+    return;
+  }
+
+  socket.emit("placeBet", {
+    telegramId: userTelegramId,
+    amount: betAmount,
+    clientSeed: "demo-seed"
+  });
+
+  // Listen for confirmation
+  socket.once("bet:confirmed", (data) => {
+    playerBet = betAmount;
+    balance = data.newBalance;
+    hasBet = true;
+    updateDisplay();
+    showNotification(`Bet placed: ${betAmount}⭐`, 'success');
+  });
+
+  socket.once("error", (err) => {
+    showNotification(err.message || "Bet failed", "error");
+  });
+}
+
+
+function cashout() {
+  if (gameState !== "flying" || !hasBet) {
+    return;
+  }
+
+  socket.emit("cashOut", { telegramId: userTelegramId });
+
+  socket.once("cashout:confirmed", (data) => {
+    const winAmount = data.payout;
+    balance = data.newBalance;
+    totalBet += playerBet;
+    totalWin += winAmount;
+
+    playSound("win");
+    animateWin();
+    showNotification(`🎉 Won ${winAmount}⭐ at ${data.multiplier}x!`, "success");
+
+    playerBet = 0;
+    hasBet = false;
+    updateDisplay();
+    updateStats();
+  });
+
+  socket.once("error", (err) => {
+    showNotification(err.message || "Cashout failed", "error");
+  });
+}
 
         // UI Functions
         function toggleMenu() {
