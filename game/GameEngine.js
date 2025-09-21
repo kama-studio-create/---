@@ -17,39 +17,66 @@ class GameEngine {
   }
 
   handleSocket(socket) {
-    socket.on('placeBet', (data) => {
+    console.log('Socket connected:', socket.id);
+    socket.emit('connected', { message: 'Connected to Aviator server.' });
+
+    socket.on('placeBet', async (data) => {
       try {
         const { telegramId, amount, clientSeed } = data;
-        if (!this.round || this.round.phase !== 'betting') return socket.emit('error', 'no_betting_phase');
-        if (!telegramId || !amount) return socket.emit('error', 'invalid_bet');
+        if (!this.round || this.round.phase !== 'betting') {
+          return socket.emit('error', { code: 'no_betting_phase', message: 'Betting phase is not active.' });
+        }
+        if (!telegramId || !amount || amount <= 0) {
+          return socket.emit('error', { code: 'invalid_bet', message: 'Invalid bet data.' });
+        }
+
+        // Check user balance
+        const user = await User.findOne({ telegramId: Number(telegramId) });
+        if (!user || user.balance < amount) {
+          return socket.emit('error', { code: 'insufficient_balance', message: 'Not enough balance.' });
+        }
+
+        // Deduct bet amount
+        user.balance -= amount;
+        await user.save();
 
         const bet = { telegramId, amount, clientSeed: clientSeed || '', placedAt: Date.now(), cashedOut: false, payout: 0 };
         this.activeBets.set(String(telegramId), bet);
+
+        await Transaction.create({ userId: user._id, type: 'bet', amount, meta: { roundId: this.round.id } });
+
         this.io.emit('game:betPlaced', bet);
       } catch (err) {
-        socket.emit('error', 'server_error');
+        console.error('Bet error:', err);
+        socket.emit('error', { code: 'server_error', message: 'Server error placing bet.' });
       }
     });
 
-    socket.on('cashOut', (data) => {
+    socket.on('cashOut', async (data) => {
       try {
         const { telegramId } = data;
         const bet = this.activeBets.get(String(telegramId));
-        if (!bet) return socket.emit('error', 'no_active_bet');
-        if (bet.cashedOut) return socket.emit('error', 'already_cashed');
-        if (!this.round || this.round.phase !== 'running') return socket.emit('error', 'not_running');
+        if (!bet) return socket.emit('error', { code: 'no_active_bet', message: 'No active bet.' });
+        if (bet.cashedOut) return socket.emit('error', { code: 'already_cashed', message: 'Already cashed out.' });
+        if (!this.round || this.round.phase !== 'running') return socket.emit('error', { code: 'not_running', message: 'Game not running.' });
 
         const payout = Math.round(bet.amount * (this.round.currentMultiplier || 1) * 100) / 100;
         bet.cashedOut = true;
         bet.payout = payout;
         this.activeBets.set(String(telegramId), bet);
 
-        this.io.emit('game:cashOut', { telegramId, payout });
+        // Update user balance
+        const user = await User.findOne({ telegramId: Number(telegramId) });
+        if (user) {
+          user.balance = (user.balance || 0) + payout;
+          await user.save();
+          await Transaction.create({ userId: user._id, type: 'cashout', amount: payout, meta: { telegramId, roundId: this.round.id } });
+        }
 
-        // record transaction
-        Transaction.create({ userId: null, type: 'cashout', amount: payout, meta: { telegramId, roundId: this.round.id } }).catch(console.error);
+        this.io.emit('game:cashOut', { telegramId, payout });
       } catch (err) {
-        socket.emit('error', 'server_error');
+        console.error('Cashout error:', err);
+        socket.emit('error', { code: 'server_error', message: 'Server error cashing out.' });
       }
     });
   }
@@ -137,8 +164,7 @@ class GameEngine {
         const user = await User.findOne({ telegramId: Number(telegramId) });
         if (!user) continue;
         if (bet.cashedOut) {
-          user.balance = (user.balance || 0) + (bet.payout || 0);
-          await user.save();
+          // Already credited on cashout
           await Transaction.create({ userId: user._id, type: 'win', amount: bet.payout, meta: { roundId: round.id, bet: bet.amount } });
         } else {
           await Transaction.create({ userId: user._id, type: 'loss', amount: bet.amount, meta: { roundId: round.id } });
