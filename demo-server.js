@@ -17,18 +17,14 @@ import adminRoutes from './routes/admin.js';
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: '*', methods: ['GET', 'POST'] },
-  transports: ['websocket', 'polling']
+  cors: { origin: '*' }
 });
 
+// Middleware
 app.use(express.json({ limit: '2mb' }));
 app.use(cors());
+app.use(helmet());
 app.use(morgan('tiny'));
-
-// Replace your current `app.use(helmet());` with this:
-app.use(helmet({
-  contentSecurityPolicy: false
-}));
 
 const limiter = rateLimit({
   windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
@@ -39,36 +35,31 @@ app.use(limiter);
 // Static files
 app.use(express.static('public'));
 
-// API routes
+// Routes
 app.use('/api/player', playerRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    mode: process.env.USE_DB === 'false' ? 'demo' : 'db',
-    timestamp: Date.now()
-  });
+  res.json({ status: 'ok', timestamp: Date.now() });
 });
 
+// Startup sequence
 (async () => {
   try {
     console.log('🚀 Starting Aviator Game Server...');
 
-    // 1. Connect DB (or demo mode)
+    // 1. Connect DB
     await connectDB();
-    if (process.env.USE_DB === 'false') {
-      console.log('⚠️ Running in DEMO MODE (no DB persistence)');
-    } else {
-      console.log('✅ Database connected (DB mode)');
+    console.log('✅ Database connected');
+
+    // 2. Start Telegram bot (non-blocking)
+    if (process.env.BOT_TOKEN) {
+      initTelegramBot(process.env.BOT_TOKEN);
+      console.log('✅ Telegram bot initialized');
     }
 
-    // 2. Init Telegram bot (non-blocking)
-    initTelegramBot(process.env.BOT_TOKEN);
-    console.log('✅ Telegram bot initialized');
-
-    // 3. Start game engine
+    // 3. Start GameEngine (manages socket.io)
     const game = new GameEngine({ io });
     await game.startLoop();
     console.log('✅ Game engine started');
@@ -76,7 +67,7 @@ app.get('/health', (req, res) => {
     // 4. Start server
     const PORT = process.env.PORT || 3000;
     const serverInstance = server.listen(PORT, () => {
-      console.log(`🌐 Server listening on http://localhost:${PORT}`);
+      console.log(`🌐 Server listening on port ${PORT}`);
       console.log(`🎮 Game URL: http://localhost:${PORT}`);
       console.log('✅ All systems ready!');
     });
@@ -91,7 +82,7 @@ app.get('/health', (req, res) => {
           process.exit(0);
         });
       } catch (error) {
-        console.error('Error during shutdown:', error);
+        console.error('❌ Error during shutdown:', error);
         process.exit(1);
       }
     };

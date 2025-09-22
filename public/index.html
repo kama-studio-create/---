@@ -7,8 +7,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1a1f2e">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✈️</text></svg>">
     <title>Aviator - Telegram Game</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -46,35 +47,6 @@
             border-radius: 0;
         }
 
-        /* Mobile Header */
-        .header {
-            background: linear-gradient(135deg, #1a1f2e 0%, #2a3441 100%);
-            padding: 15px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid rgba(0, 255, 136, 0.3);
-            backdrop-filter: blur(20px);
-            position: relative;
-            z-index: 10;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .menu-button {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .menu-button:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
         /* Connection Status */
         .connection-status {
             position: fixed;
@@ -104,6 +76,20 @@
             background: rgba(255, 193, 7, 0.2);
             color: #ffc107;
             border: 1px solid #ffc107;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a1f2e 0%, #2a3441 100%);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(0, 255, 136, 0.3);
+            backdrop-filter: blur(20px);
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
 
         .logo {
@@ -139,6 +125,21 @@
             border-radius: 20px;
             border: 1px solid #00ff88;
             font-weight: 600;
+        }
+
+        .menu-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-button:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
         /* Game Area */
@@ -218,11 +219,6 @@
             transform: translateY(5px);
         }
 
-        .plane.takeoff {
-            color: #00ff88;
-            animation: takeoff 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-        }
-
         .status {
             font-size: 18px;
             font-weight: 600;
@@ -230,21 +226,10 @@
             text-align: center;
         }
 
-        .status.flying {
-            color: #00ff88;
-        }
-
-        .status.crashed {
-            color: #ff4757;
-        }
-
-        .status.waiting {
-            color: #ffc107;
-        }
-
-        .status.betting {
-            color: #00d4ff;
-        }
+        .status.flying { color: #00ff88; }
+        .status.crashed { color: #ff4757; }
+        .status.waiting { color: #ffc107; }
+        .status.betting { color: #00d4ff; }
 
         /* Betting Controls */
         .betting-controls {
@@ -255,121 +240,6 @@
             box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
         }
 
-        .bet-section {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            align-items: center;
-        }
-
-        .bet-input {
-            flex: 1;
-            background: rgba(0, 0, 0, 0.4);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 15px;
-            font-size: 18px;
-            text-align: center;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .bet-input:focus {
-            outline: none;
-            border-color: #00d4ff;
-            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
-        }
-
-        .bet-btn {
-            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
-            color: black;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 18px;
-            min-width: 140px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
-        }
-
-        .bet-btn:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
-            background: linear-gradient(135deg, #00ff88 0%, #00e676 100%);
-        }
-
-        .bet-btn:disabled {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            color: rgba(255, 255, 255, 0.4);
-            cursor: not-allowed;
-            box-shadow: none;
-            transform: none;
-        }
-
-        .bet-btn:active:not(:disabled) {
-            transform: translateY(-1px);
-        }
-
-        .cashout-btn {
-            background: linear-gradient(135deg, #ff4757 0%, #c44569 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
-            border: none;
-            padding: 15px 30px;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            margin-top: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .cashout-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
-        }
-
-        .cashout-btn:disabled {
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.5);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* Quick bet buttons */
-        .quick-bets {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
-        .quick-bet {
-            flex: 1;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .quick-bet:hover {
-            border-color: #00d4ff;
-            background: rgba(0, 212, 255, 0.1);
-        }
-
-        /* Statistics */
         .stats {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -396,13 +266,18 @@
             color: #00ff88;
         }
 
-        /* History */
         .history {
             display: flex;
             gap: 4px;
             overflow-x: auto;
             padding: 10px 0;
             margin-bottom: 15px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .history::-webkit-scrollbar {
+            display: none;
         }
 
         .history-item {
@@ -413,6 +288,7 @@
             font-weight: 600;
             text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.2);
+            white-space: nowrap;
         }
 
         .history-item.low {
@@ -433,7 +309,317 @@
             color: #00ff88;
         }
 
-        /* Enhanced Animations */
+        .quick-bets {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .quick-bet {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quick-bet:hover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .bet-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: stretch;
+        }
+
+        @media (min-width: 400px) {
+            .bet-section {
+                display: grid;
+                grid-template-columns: 1fr auto auto;
+                gap: 10px;
+                align-items: center;
+            }
+        }
+
+        .bet-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-size: 18px;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            height: 54px;
+            box-sizing: border-box;
+        }
+
+        .bet-input:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+        }
+
+        .bet-btn {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            color: black;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 18px;
+            min-width: 140px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+            display: block;
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .bet-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
+            background: linear-gradient(135deg, #00ff88 0%, #00e676 100%);
+        }
+
+        .bet-btn:disabled {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            color: rgba(255, 255, 255, 0.4);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .cashout-btn {
+            background: linear-gradient(135deg, #ff4757 0%, #c44569 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+            border: none;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            min-width: 100px;
+        }
+
+        .cashout-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
+        }
+
+        .cashout-btn:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .cashout-btn.inactive {
+            opacity: 0.5;
+        }
+
+        /* Menu */
+        .menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 80%;
+            max-width: 350px;
+            background: linear-gradient(135deg, #1a1f2e 0%, #2a3441 100%);
+            color: white;
+            z-index: 2000;
+            padding: 20px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+        }
+
+        .menu.active {
+            transform: translateX(0);
+        }
+
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .menu-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .menu-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background 0.2s ease;
+        }
+
+        .menu-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-action {
+            display: block;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .menu-action:hover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1f2e 0%, #2a3441 100%);
+            border-radius: 20px;
+            max-width: 90%;
+            max-height: 90%;
+            width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
+            color: black;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: rgba(0, 0, 0, 0.2);
+            border: none;
+            color: black;
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: rgba(0, 0, 0, 0.3);
+            transform: scale(1.1);
+        }
+
+        .modal-body {
+            padding: 30px;
+            color: white;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .profile-info {
+            display: grid;
+            gap: 20px;
+        }
+
+        .profile-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .profile-label {
+            font-weight: 600;
+            opacity: 0.8;
+        }
+
+        .profile-value {
+            font-weight: 700;
+            color: #00ff88;
+        }
+
+        /* Animations */
         @keyframes float {
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-8px); }
@@ -456,21 +642,6 @@
             }
             75% { 
                 transform: translateX(-15px) translateY(-15px) rotate(-18deg); 
-            }
-        }
-
-        @keyframes takeoff {
-            0% { 
-                transform: translateY(5px) rotate(0deg) scale(1); 
-                opacity: 1;
-            }
-            30% { 
-                transform: translateY(-10px) rotate(-10deg) scale(1.1); 
-                opacity: 1;
-            }
-            100% { 
-                transform: translateY(-15px) rotate(-15deg) scale(1.2); 
-                opacity: 1;
             }
         }
 
@@ -525,6 +696,17 @@
             }
         }
 
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
         @keyframes slideInNotification {
             from {
                 transform: translateX(100%);
@@ -553,15 +735,40 @@
             .betting-controls {
                 padding: 15px;
             }
+
+            .menu {
+                width: 90%;
+            }
+
+            .bet-section {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .bet-input {
+                font-size: 16px;
+                padding: 12px 15px;
+                height: 48px;
+            }
+
+            .bet-btn, .cashout-btn {
+                font-size: 16px;
+                padding: 12px 20px;
+                min-width: unset;
+                height: 48px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="game-container" id="gameContainer">
+    <div class="game-container">
         <!-- Connection Status -->
         <div class="connection-status disconnected" id="connectionStatus">
-            🔴 Connecting...
+            🔴 Offline Mode
         </div>
+
+        <!-- Menu Overlay -->
+        <div class="menu-overlay" id="menuOverlay"></div>
 
         <!-- Header -->
         <div class="header">
@@ -571,7 +778,7 @@
             </div>
             <div class="user-info">
                 <div class="balance" id="balance">1000⭐</div>
-                <button class="menu-button" onclick="toggleMenu()" id="menuBtn">☰</button>
+                <button class="menu-button" id="menuBtn">☰</button>
             </div>
         </div>
 
@@ -580,7 +787,7 @@
             <div class="flight-display">
                 <div class="multiplier waiting" id="multiplier">1.00x</div>
                 <div class="plane waiting" id="plane">✈️</div>
-                <div class="status waiting" id="status">Connecting to server...</div>
+                <div class="status waiting" id="status">Demo Mode - Click Place Bet to start</div>
             </div>
         </div>
 
@@ -601,714 +808,608 @@
             <!-- History -->
             <div class="history" id="history">
                 <div class="history-item low">1.2x</div>
-                <div class="history-item medium">3.4x</div>
                 <div class="history-item high">8.7x</div>
+                <div class="history-item medium">2.9x</div>
                 <div class="history-item low">1.8x</div>
                 <div class="history-item medium">2.9x</div>
             </div>
 
             <!-- Quick Bets -->
             <div class="quick-bets">
-                <div class="quick-bet" onclick="setBet(10)">10⭐</div>
-                <div class="quick-bet" onclick="setBet(50)">50⭐</div>
-                <div class="quick-bet" onclick="setBet(100)">100⭐</div>
-                <div class="quick-bet" onclick="setBet(500)">500⭐</div>
+                <div class="quick-bet" data-amount="10">10⭐</div>
+                <div class="quick-bet" data-amount="50">50⭐</div>
+                <div class="quick-bet" data-amount="100">100⭐</div>
+                <div class="quick-bet" data-amount="500">500⭐</div>
             </div>
 
             <!-- Betting Section -->
             <div class="bet-section">
-                <input type="number" class="bet-input" id="betAmount" placeholder="Bet Amount" value="100" min="10">
-                <button class="bet-btn" id="placeBet" onclick="placeBet()">Place Bet</button>
+                <input type="number" class="bet-input" id="betAmount" placeholder="Bet Amount" value="100" min="10" max="1000">
+                <button class="bet-btn" id="placeBet">Place Bet</button>
+                <button class="cashout-btn" id="cashoutBtn" disabled>Cash Out</button>
             </div>
+        </div>
+    </div>
 
-            <!-- Cashout Button -->
-            <button class="cashout-btn" id="cashoutBtn" onclick="cashout()" disabled>Cash Out</button>
+    <!-- Side Menu -->
+    <div class="menu" id="menu">
+        <div class="menu-header">
+            <div class="menu-title">Menu</div>
+            <button class="menu-close" id="menuClose">×</button>
+        </div>
+        
+        <button class="menu-action" data-screen="profile">👤 Profile</button>
+        <button class="menu-action" data-screen="transactions">📊 Transactions</button>
+        <button class="menu-action" data-screen="settings">⚙️ Settings</button>
+        <button class="menu-action" data-screen="deposit">💰 Deposit</button>
+        <button class="menu-action" data-screen="withdraw">💸 Withdraw</button>
+        <button class="menu-action" id="soundToggle">🔊 Sound Toggle</button>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Title</h2>
+                <button class="modal-close" id="modalClose">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                Content goes here
+            </div>
         </div>
     </div>
 
     <script>
-        // Game variables
-        let gameState = 'waiting';
-        let currentMultiplier = 1.00;
-        let playerBet = 0;
-        let hasBet = false;
-        let balance = 1000;
-        let socket = null;
-        let userTelegramId = Math.floor(Math.random() * 1000000000);
-        let history = [1.2, 3.4, 8.7, 1.8, 2.9];
-        let totalBet = 0;
-        let totalWin = 0;
-        let playerCashedOut = false;
+        // Aviator Game - Standalone Version (No Socket.IO dependency)
+        class AviatorGame {
+            constructor() {
+                this.gameState = 'waiting';
+                this.currentMultiplier = 1.00;
+                this.playerBet = 0;
+                this.hasBet = false;
+                this.balance = 1000;
+                this.history = [1.2, 8.7, 2.9, 1.8, 3.4];
+                this.totalBet = 0;
+                this.totalWin = 0;
+                this.playerCashedOut = false;
+                this.soundEnabled = true;
+                this.gameInterval = null;
+                this.multiplierInterval = null;
+            }
 
-        // DOM elements
-        const multiplierEl = document.getElementById('multiplier');
-        const planeEl = document.getElementById('plane');
-        const statusEl = document.getElementById('status');
-        const betAmountEl = document.getElementById('betAmount');
-        const placeBetBtn = document.getElementById('placeBet');
-        const cashoutBtn = document.getElementById('cashoutBtn');
-        const balanceEl = document.getElementById('balance');
-        const totalBetEl = document.getElementById('totalBet');
-        const totalWinEl = document.getElementById('totalWin');
-        const historyEl = document.getElementById('history');
+            init() {
+                console.log('🚀 Initializing Aviator game...');
+                
+                this.setupEventListeners();
+                this.updateDisplay();
+                this.updateHistory();
+                this.updateStats();
+                this.setVH();
+                this.updateConnectionStatus('disconnected');
+                
+                console.log('✅ Game initialized (Demo Mode)');
+            }
 
-        // Sound Management
-        let soundEnabled = true;
-        let sounds = {};
-
-        function initSounds() {
-            if (typeof(AudioContext) !== "undefined" || typeof(webkitAudioContext) !== "undefined") {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            setupEventListeners() {
+                // Mobile viewport
+                window.addEventListener('resize', () => this.setVH());
                 
-                sounds.takeoff = () => {
-                    if (!soundEnabled) return;
-                    const oscillator = audioContext.createOscillator();
-                    const gainNode = audioContext.createGain();
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
-                    
-                    oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.5);
-                    
-                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-                    
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.5);
-                };
+                // Menu functionality
+                document.getElementById('menuBtn').addEventListener('click', () => this.toggleMenu());
+                document.getElementById('menuClose').addEventListener('click', () => this.closeMenu());
+                document.getElementById('menuOverlay').addEventListener('click', () => this.closeMenu());
                 
-                sounds.crash = () => {
-                    if (!soundEnabled) return;
-                    const oscillator = audioContext.createOscillator();
-                    const gainNode = audioContext.createGain();
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
-                    
-                    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.8);
-                    oscillator.type = 'sawtooth';
-                    
-                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
-                    
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.8);
-                };
+                // Modal functionality
+                document.getElementById('modalClose').addEventListener('click', () => this.closeModal());
+                document.getElementById('modalOverlay').addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) this.closeModal();
+                });
                 
-                sounds.win = () => {
-                    if (!soundEnabled) return;
-                    const notes = [523.25, 659.25, 783.99];
-                    notes.forEach((freq, index) => {
-                        const oscillator = audioContext.createOscillator();
-                        const gainNode = audioContext.createGain();
-                        
-                        oscillator.connect(gainNode);
-                        gainNode.connect(audioContext.destination);
-                        
-                        oscillator.frequency.value = freq;
-                        oscillator.type = 'sine';
-                        
-                        gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.1);
-                        gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + index * 0.1 + 0.05);
-                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + index * 0.1 + 0.3);
-                        
-                        oscillator.start(audioContext.currentTime + index * 0.1);
-                        oscillator.stop(audioContext.currentTime + index * 0.1 + 0.3);
+                // Menu actions
+                document.querySelectorAll('.menu-action').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const screen = btn.getAttribute('data-screen');
+                        if (screen) {
+                            this.showScreen(screen);
+                        } else if (btn.id === 'soundToggle') {
+                            this.toggleSound();
+                        }
                     });
+                });
+                
+                // Game controls
+                document.getElementById('placeBet').addEventListener('click', () => this.placeBet());
+                document.getElementById('cashoutBtn').addEventListener('click', () => this.cashout());
+                
+                // Quick bet buttons
+                document.querySelectorAll('.quick-bet').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const amount = parseInt(btn.getAttribute('data-amount'));
+                        this.setBet(amount);
+                    });
+                });
+                
+                // Bet input validation
+                const betInput = document.getElementById('betAmount');
+                betInput.addEventListener('input', () => {
+                    let value = parseInt(betInput.value);
+                    if (isNaN(value) || value < 10) betInput.value = 10;
+                    if (value > this.balance) betInput.value = this.balance;
+                });
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space' && this.gameState === 'flying' && this.hasBet) {
+                        e.preventDefault();
+                        this.cashout();
+                    }
+                    if (e.key === 'Enter' && this.gameState === 'betting' && !this.hasBet) {
+                        e.preventDefault();
+                        this.placeBet();
+                    }
+                    if (e.key === 'Escape') {
+                        this.closeMenu();
+                        this.closeModal();
+                    }
+                });
+            }
+
+            // Game Logic
+            placeBet() {
+                const betAmount = parseInt(document.getElementById('betAmount').value);
+                
+                if (this.gameState === 'flying') {
+                    this.showNotification('Cannot bet during flight!', 'warning');
+                    return;
+                }
+                
+                if (betAmount < 10 || betAmount > this.balance) {
+                    this.showNotification('Invalid bet amount!', 'error');
+                    return;
+                }
+                
+                if (this.hasBet) {
+                    this.showNotification('You already have a bet placed!', 'warning');
+                    return;
+                }
+
+                // Place bet
+                this.playerBet = betAmount;
+                this.hasBet = true;
+                this.balance -= betAmount;
+                this.playerCashedOut = false;
+                
+                this.showNotification(`Bet placed: ${betAmount}⭐`, 'success');
+                this.updateDisplay();
+                
+                // Start game immediately in demo mode
+                if (this.gameState === 'waiting') {
+                    this.startDemoGame();
+                }
+            }
+
+            cashout() {
+                if (this.gameState !== 'flying' || !this.hasBet || this.playerCashedOut) {
+                    return;
+                }
+
+                const winAmount = Math.floor(this.playerBet * this.currentMultiplier);
+                this.balance += winAmount;
+                this.totalBet += this.playerBet;
+                this.totalWin += winAmount;
+                this.playerCashedOut = true;
+                
+                this.showNotification(`Cashed out ${winAmount}⭐ at ${this.currentMultiplier.toFixed(2)}x!`, 'success');
+                this.playSound('win');
+                
+                this.updateDisplay();
+                this.updateStats();
+            }
+
+            startDemoGame() {
+                // Betting phase
+                this.gameState = 'betting';
+                this.showNotification('Betting phase...', 'info');
+                this.updateDisplay();
+                
+                setTimeout(() => {
+                    // Takeoff
+                    this.gameState = 'flying';
+                    this.currentMultiplier = 1.00;
+                    this.updateDisplay();
+                    this.playSound('takeoff');
+                    this.showNotification('Plane taking off!', 'info');
+                    
+                    // Start multiplier increase
+                    this.startMultiplierIncrease();
+                }, 3000);
+            }
+
+            startMultiplierIncrease() {
+                let startTime = Date.now();
+                let crashPoint = this.generateCrashPoint();
+                
+                this.multiplierInterval = setInterval(() => {
+                    let elapsed = (Date.now() - startTime) / 1000;
+                    this.currentMultiplier = 1 + (elapsed * 0.5); // Increase by 0.5x per second
+                    
+                    if (this.currentMultiplier >= crashPoint) {
+                        this.crashGame(crashPoint);
+                        return;
+                    }
+                    
+                    this.updateDisplay();
+                }, 100);
+            }
+
+            generateCrashPoint() {
+                // Simple crash point generation (not cryptographically secure)
+                const rand = Math.random();
+                if (rand < 0.5) return 1 + Math.random() * 2; // 1-3x (50% chance)
+                if (rand < 0.8) return 2 + Math.random() * 3; // 2-5x (30% chance)
+                if (rand < 0.95) return 5 + Math.random() * 10; // 5-15x (15% chance)
+                return 10 + Math.random() * 40; // 10-50x (5% chance)
+            }
+
+            crashGame(crashPoint) {
+                clearInterval(this.multiplierInterval);
+                
+                this.gameState = 'crashed';
+                this.currentMultiplier = crashPoint;
+                
+                // Add to history
+                this.history.unshift(crashPoint);
+                if (this.history.length > 10) this.history.pop();
+                this.updateHistory();
+                
+                // Handle player loss if they didn't cash out
+                if (this.hasBet && !this.playerCashedOut) {
+                    this.showNotification(`Crashed at ${crashPoint.toFixed(2)}x - Lost ${this.playerBet}⭐`, 'error');
+                    this.totalBet += this.playerBet;
+                    this.updateStats();
+                }
+                
+                this.playSound('crash');
+                this.updateDisplay();
+                
+                // Reset for next round
+                setTimeout(() => {
+                    this.hasBet = false;
+                    this.playerBet = 0;
+                    this.playerCashedOut = false;
+                    this.gameState = 'waiting';
+                    this.currentMultiplier = 1.00;
+                    this.updateDisplay();
+                }, 3000);
+            }
+
+            setBet(amount) {
+                document.getElementById('betAmount').value = amount;
+                this.playSound('bet');
+            }
+
+            // UI Updates
+            updateDisplay() {
+                // Multiplier
+                const multiplierEl = document.getElementById('multiplier');
+                multiplierEl.textContent = this.currentMultiplier.toFixed(2) + 'x';
+                multiplierEl.className = `multiplier ${this.gameState}`;
+                
+                // Plane
+                const planeEl = document.getElementById('plane');
+                planeEl.className = `plane ${this.gameState}`;
+                
+                // Status
+                const statusEl = document.getElementById('status');
+                const statusTexts = {
+                    waiting: 'Place your bet to start!',
+                    betting: 'Flight starting soon...',
+                    flying: this.hasBet && !this.playerCashedOut ? 'Cash out anytime!' : 'Flight in progress...',
+                    crashed: `Crashed at ${this.currentMultiplier.toFixed(2)}x`
+                };
+                statusEl.textContent = statusTexts[this.gameState];
+                statusEl.className = `status ${this.gameState}`;
+                
+                // Buttons
+                const placeBetBtn = document.getElementById('placeBet');
+                placeBetBtn.disabled = this.gameState === 'flying' || this.hasBet;
+                
+                const cashoutBtn = document.getElementById('cashoutBtn');
+                cashoutBtn.disabled = this.gameState !== 'flying' || !this.hasBet || this.playerCashedOut;
+                
+                if (this.hasBet && this.gameState === 'flying' && !this.playerCashedOut) {
+                    const potentialWin = Math.floor(this.playerBet * this.currentMultiplier);
+                    cashoutBtn.textContent = `Cash Out ${potentialWin}⭐`;
+                    cashoutBtn.classList.remove('inactive');
+                } else {
+                    cashoutBtn.textContent = 'Cash Out';
+                    if (!this.hasBet || this.gameState !== 'flying' || this.playerCashedOut) {
+                        cashoutBtn.classList.add('inactive');
+                    }
+                }
+                
+                // Balance
+                document.getElementById('balance').textContent = this.balance + '⭐';
+            }
+
+            updateStats() {
+                document.getElementById('totalBet').textContent = this.totalBet + '⭐';
+                document.getElementById('totalWin').textContent = this.totalWin + '⭐';
+            }
+
+            updateHistory() {
+                const historyEl = document.getElementById('history');
+                historyEl.innerHTML = '';
+                this.history.forEach(mult => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.textContent = mult.toFixed(2) + 'x';
+                    
+                    if (mult < 2) item.classList.add('low');
+                    else if (mult < 5) item.classList.add('medium');
+                    else item.classList.add('high');
+                    
+                    historyEl.appendChild(item);
+                });
+            }
+
+            updateConnectionStatus(status) {
+                const statusEl = document.getElementById('connectionStatus');
+                statusEl.className = `connection-status ${status}`;
+                
+                const statusTexts = {
+                    connected: '🟢 Connected',
+                    connecting: '🟡 Connecting...',
+                    disconnected: '🔴 Demo Mode'
                 };
                 
-                sounds.bet = () => {
-                    if (!soundEnabled) return;
+                statusEl.innerHTML = statusTexts[status] || '❓ Unknown';
+            }
+
+            // Menu Functions
+            toggleMenu() {
+                const menu = document.getElementById('menu');
+                const menuOverlay = document.getElementById('menuOverlay');
+                menu.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
+            }
+
+            closeMenu() {
+                const menu = document.getElementById('menu');
+                const menuOverlay = document.getElementById('menuOverlay');
+                menu.classList.remove('active');
+                menuOverlay.classList.remove('active');
+            }
+
+            showScreen(name) {
+                if (name === 'profile') {
+                    this.showProfileModal();
+                } else if (name === 'transactions') {
+                    this.showTransactionsModal();
+                } else {
+                    this.showNotification(`${name.charAt(0).toUpperCase() + name.slice(1)} coming soon!`, 'info');
+                }
+                this.closeMenu();
+            }
+
+            // Modal Functions
+            showModal(title, content) {
+                document.getElementById('modalTitle').textContent = title;
+                document.getElementById('modalBody').innerHTML = content;
+                document.getElementById('modalOverlay').style.display = 'flex';
+            }
+
+            closeModal() {
+                document.getElementById('modalOverlay').style.display = 'none';
+            }
+
+            showProfileModal() {
+                const profileContent = `
+                    <div class="profile-info">
+                        <div class="profile-item">
+                            <span class="profile-label">Player ID</span>
+                            <span class="profile-value">DEMO123456</span>
+                        </div>
+                        <div class="profile-item">
+                            <span class="profile-label">Current Balance</span>
+                            <span class="profile-value">${this.balance}⭐</span>
+                        </div>
+                        <div class="profile-item">
+                            <span class="profile-label">Total Bets</span>
+                            <span class="profile-value">${this.totalBet}⭐</span>
+                        </div>
+                        <div class="profile-item">
+                            <span class="profile-label">Total Wins</span>
+                            <span class="profile-value">${this.totalWin}⭐</span>
+                        </div>
+                        <div class="profile-item">
+                            <span class="profile-label">Net Profit</span>
+                            <span class="profile-value" style="color: ${this.totalWin - this.totalBet >= 0 ? '#00ff88' : '#ff4757'}">${this.totalWin - this.totalBet}⭐</span>
+                        </div>
+                        <div class="profile-item">
+                            <span class="profile-label">Mode</span>
+                            <span class="profile-value">Demo</span>
+                        </div>
+                    </div>
+                `;
+                this.showModal('👤 Player Profile', profileContent);
+            }
+
+            showTransactionsModal() {
+                const transactionContent = `
+                    <div style="text-align: center; padding: 20px; opacity: 0.7;">
+                        <h3>Demo Mode</h3>
+                        <p>Transaction history is not available in demo mode.</p>
+                        <p>Connect to a real server to see actual transactions.</p>
+                    </div>
+                `;
+                this.showModal('📊 Transaction History', transactionContent);
+            }
+
+            // Sound System
+            playSound(soundName) {
+                if (!this.soundEnabled) return;
+                
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    if (soundName === 'takeoff') {
+                        this.playTakeoffSound(audioContext);
+                    } else if (soundName === 'crash') {
+                        this.playCrashSound(audioContext);
+                    } else if (soundName === 'win') {
+                        this.playWinSound(audioContext);
+                    } else if (soundName === 'bet') {
+                        this.playBetSound(audioContext);
+                    }
+                } catch (error) {
+                    console.log('Sound failed:', error);
+                }
+            }
+
+            playTakeoffSound(audioContext) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.5);
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            }
+
+            playCrashSound(audioContext) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.8);
+                oscillator.type = 'sawtooth';
+                
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.8);
+            }
+
+            playWinSound(audioContext) {
+                const notes = [523.25, 659.25, 783.99];
+                notes.forEach((freq, index) => {
                     const oscillator = audioContext.createOscillator();
                     const gainNode = audioContext.createGain();
                     
                     oscillator.connect(gainNode);
                     gainNode.connect(audioContext.destination);
                     
-                    oscillator.frequency.value = 800;
-                    oscillator.type = 'square';
+                    oscillator.frequency.value = freq;
+                    oscillator.type = 'sine';
                     
-                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.1);
+                    gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + index * 0.1 + 0.05);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + index * 0.1 + 0.3);
                     
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.1);
+                    oscillator.start(audioContext.currentTime + index * 0.1);
+                    oscillator.stop(audioContext.currentTime + index * 0.1 + 0.3);
+                });
+            }
+
+            playBetSound(audioContext) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'square';
+                
+                gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            }
+
+            toggleSound() {
+                this.soundEnabled = !this.soundEnabled;
+                this.showNotification(`Sound ${this.soundEnabled ? 'enabled' : 'disabled'}`, 'info');
+                
+                const soundBtn = document.getElementById('soundToggle');
+                soundBtn.textContent = this.soundEnabled ? '🔊 Sound On' : '🔇 Sound Off';
+            }
+
+            // Utility Functions
+            setVH() {
+                let vh = window.innerHeight * 0.01;
+                document.documentElement.style.setProperty('--vh', `${vh}px`);
+            }
+
+            showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                const colors = {
+                    success: 'linear-gradient(135deg, #00ff88, #00cc6a)',
+                    error: 'linear-gradient(135deg, #ff4757, #c44569)',
+                    warning: 'linear-gradient(135deg, #ffc107, #f39c12)',
+                    info: 'linear-gradient(135deg, #17a2b8, #138496)'
                 };
-            }
-        }
-
-        function playSound(soundName) {
-            if (sounds[soundName]) {
-                try {
-                    sounds[soundName]();
-                } catch (e) {
-                    console.log('Sound failed:', e);
-                }
-            }
-        }
-
-        // Connection status update
-        function updateConnectionStatus(status) {
-            const statusEl = document.getElementById('connectionStatus');
-            statusEl.className = `connection-status ${status}`;
-            
-            switch(status) {
-                case 'connected':
-                    statusEl.innerHTML = '🟢 Connected';
-                    break;
-                case 'connecting':
-                    statusEl.innerHTML = '🟡 Connecting...';
-                    break;
-                case 'disconnected':
-                    statusEl.innerHTML = '🔴 Disconnected';
-                    break;
-            }
-        }
-
-        // Initialize WebSocket connection
-        function initSocketConnection() {
-            console.log('🔌 Connecting to server...');
-            updateConnectionStatus('connecting');
-            
-            try {
-                socket = io({
-                    transports: ['websocket', 'polling'],
-                    timeout: 5000,
-                    forceNew: true
-                });
                 
-                socket.on('connect', () => {
-                    console.log('✅ Connected to server with ID:', socket.id);
-                    updateConnectionStatus('connected');
-                });
-
-                socket.on('connected', (data) => {
-                    console.log('🎮 Server confirmed connection:', data);
-                    showNotification('Connected to game server', 'success');
-                    registerUser();
-                });
-
-                socket.on('disconnect', (reason) => {
-                    console.log('❌ Disconnected from server. Reason:', reason);
-                    updateConnectionStatus('disconnected');
-                    showNotification('Connection lost - reconnecting...', 'error');
-                    
-                    // Reset game state
-                    hasBet = false;
-                    playerBet = 0;
-                    playerCashedOut = false;
-                    gameState = 'waiting';
-                    updateDisplay();
-                });
-
-                socket.on('connect_error', (error) => {
-                    console.error('Connection error:', error);
-                    updateConnectionStatus('disconnected');
-                    showNotification('Failed to connect to server', 'error');
-                });
-
-                // Game event handlers
-                socket.on('game:bettingPhase', (data) => {
-                    console.log('🎯 Betting phase started for round:', data.roundId);
-                    gameState = 'betting';
-                    currentMultiplier = 1.00;
-                    hasBet = false;
-                    playerCashedOut = false;
-                    updateDisplay();
-                    showNotification('Place your bets!', 'info');
-                });
-
-                socket.on('game:takeoff', (data) => {
-                    console.log('🛫 Plane taking off for round:', data.roundId);
-                    gameState = 'flying';
-                    currentMultiplier = 1.00;
-                    updateDisplay();
-                    playSound('takeoff');
-                    showNotification('Plane taking off!', 'info');
-                });
-
-                socket.on('game:multiplierUpdate', (data) => {
-                    currentMultiplier = data.multiplier;
-                    updateDisplay();
-                });
-
-                socket.on('game:crashed', (data) => {
-                    console.log(`💥 Game crashed at ${data.crashPoint}x`);
-                    gameState = 'crashed';
-                    currentMultiplier = data.crashPoint;
-                    
-                    // Add to history
-                    history.unshift(data.crashPoint);
-                    if (history.length > 10) history.pop();
-                    updateHistory();
-                    
-                    // Handle player loss if they had a bet and didn't cash out
-                    if (hasBet && !playerCashedOut) {
-                        showNotification(`💥 Crashed at ${data.crashPoint.toFixed(2)}x - Lost ${playerBet}⭐`, 'error');
-                        totalBet += playerBet;
-                        updateStats();
-                    }
-                    
-                    // Reset for next round
-                    hasBet = false;
-                    playerBet = 0;
-                    playerCashedOut = false;
-                    
-                    updateDisplay();
-                    playSound('crash');
-                    createExplosionEffect();
-                });
-
-                socket.on('game:betPlaced', (data) => {
-                    console.log(`💰 ${data.username} placed bet: ${data.amount}⭐`);
-                });
-
-                socket.on('game:cashOut', (data) => {
-                    console.log(`🎯 ${data.username} cashed out: ${data.payout}⭐ at ${data.multiplier}x`);
-                });
-
-                // Bet confirmation
-                socket.on('betPlaced', (data) => {
-                    if (data.success) {
-                        balance = data.newBalance;
-                        updateDisplay();
-                    }
-                });
-
-                // Cashout confirmation
-                socket.on('cashedOut', (data) => {
-                    if (data.success) {
-                        const winAmount = data.payout;
-                        const multiplier = data.multiplier;
-                        balance = data.newBalance;
-                        totalBet += playerBet;
-                        totalWin += winAmount;
-                        playerCashedOut = true;
-                        
-                        playSound('win');
-                        animateWin();
-                        
-                        showNotification(`🎉 Won ${winAmount}⭐ at ${multiplier.toFixed(2)}x!`, 'success');
-                        
-                        playerBet = 0;
-                        hasBet = false;
-                        updateDisplay();
-                        updateStats();
-                    }
-                });
-
-                // Error handling
-                socket.on('error', (error) => {
-                    let errorMsg = 'An error occurred';
-                    switch (error) {
-                        case 'no_betting_phase':
-                            errorMsg = 'Betting phase has ended';
-                            break;
-                        case 'insufficient_balance':
-                            errorMsg = 'Insufficient balance';
-                            break;
-                        case 'invalid_bet_amount':
-                            errorMsg = 'Invalid bet amount';
-                            break;
-                        case 'already_has_bet':
-                            errorMsg = 'You already have a bet placed';
-                            break;
-                        case 'user_banned':
-                            errorMsg = 'Account is banned';
-                            break;
-                        case 'no_active_bet':
-                            errorMsg = 'No active bet found';
-                            break;
-                        case 'already_cashed':
-                            errorMsg = 'Already cashed out';
-                            break;
-                        case 'not_running':
-                            errorMsg = 'Game not running';
-                            break;
-                        default:
-                            errorMsg = 'Server error';
-                    }
-                    showNotification(errorMsg, 'error');
-                });
-
-            } catch (error) {
-                console.error('Socket initialization failed:', error);
-                updateConnectionStatus('disconnected');
-                showNotification('Failed to connect to server', 'error');
-            }
-        }
-
-        // Register user with server
-        async function registerUser() {
-            try {
-                const response = await fetch('/api/player/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        telegramId: userTelegramId,
-                        username: `demo${userTelegramId}`,
-                        firstName: 'Demo',
-                        lastName: 'User'
-                    })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    balance = data.user?.balance || 1000;
-                    updateDisplay();
-                    console.log('✅ User registered');
-                }
-            } catch (error) {
-                console.error('Registration failed:', error);
-                balance = 1000; // fallback
-                updateDisplay();
-            }
-        }
-
-        // Game functions
-        function setBet(amount) {
-            if (gameState === 'waiting' || gameState === 'betting') {
-                betAmountEl.value = amount;
-                playSound('bet');
-                
-                // Animate button
-                event.target.style.transform = 'scale(0.9)';
-                setTimeout(() => {
-                    event.target.style.transform = 'scale(1)';
-                }, 150);
-            }
-        }
-
-        function placeBet() {
-            const betAmount = parseInt(betAmountEl.value);
-            
-            if (gameState !== 'betting') {
-                showNotification('Wait for betting phase!', 'warning');
-                return;
-            }
-            
-            if (betAmount < 10 || betAmount > balance) {
-                showNotification('Invalid bet amount!', 'error');
-                return;
-            }
-            
-            if (hasBet) {
-                showNotification('You already have a bet placed!', 'warning');
-                return;
-            }
-            
-            try {
-                // Use socket for real-time game operations
-                socket.emit('placeBet', {
-                    telegramId: userTelegramId,
-                    amount: betAmount,
-                    clientSeed: Math.random().toString(36).substring(7)
-                });
-
-                // Set local state immediately for UI feedback
-                playerBet = betAmount;
-                hasBet = true;
-                balance -= betAmount; // Optimistic update
-                
-                playSound('bet');
-                animateBetPlacement();
-                updateDisplay();
-
-            } catch (error) {
-                console.error('Bet error:', error);
-                showNotification('Bet failed', 'error');
-                
-                // Revert optimistic update
-                playerBet = 0;
-                hasBet = false;
-                balance += betAmount;
-                updateDisplay();
-            }
-        }
-
-        function cashout() {
-            if (gameState !== 'flying' || !hasBet) {
-                return;
-            }
-            
-            try {
-                // Use socket for real-time cashout
-                socket.emit('cashOut', {
-                    telegramId: userTelegramId
-                });
-
-            } catch (error) {
-                console.error('Cashout error:', error);
-                showNotification('Cashout failed', 'error');
-            }
-        }
-
-        function animateBetPlacement() {
-            placeBetBtn.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                placeBetBtn.style.transform = 'scale(1)';
-            }, 150);
-        }
-
-        function animateWin() {
-            const flashOverlay = document.createElement('div');
-            flashOverlay.style.cssText = `
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(45deg, rgba(0, 255, 136, 0.3), rgba(0, 212, 255, 0.3));
-                pointer-events: none;
-                z-index: 5;
-                animation: winFlash 0.6s ease-out;
-            `;
-            
-            document.querySelector('.flight-display').appendChild(flashOverlay);
-            
-            multiplierEl.style.transform = 'scale(1.2)';
-            multiplierEl.style.textShadow = '0 0 30px #00ff88';
-            
-            setTimeout(() => {
-                multiplierEl.style.transform = 'scale(1)';
-                multiplierEl.style.textShadow = '0 0 20px currentColor';
-                flashOverlay.remove();
-            }, 600);
-        }
-
-        function createExplosionEffect() {
-            const explosionContainer = document.createElement('div');
-            explosionContainer.style.cssText = `
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                width: 1px;
-                height: 1px;
-                pointer-events: none;
-                z-index: 10;
-            `;
-            
-            document.querySelector('.flight-display').appendChild(explosionContainer);
-            
-            for (let i = 0; i < 15; i++) {
-                const particle = document.createElement('div');
-                const angle = (i / 15) * Math.PI * 2;
-                const distance = 30 + Math.random() * 50;
-                const size = 3 + Math.random() * 5;
-                
-                particle.style.cssText = `
-                    position: absolute;
-                    width: ${size}px;
-                    height: ${size}px;
-                    background: #ff4757;
-                    border-radius: 50%;
-                    animation: explodeParticle 1s ease-out forwards;
-                    transform: translate(-50%, -50%);
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: ${colors[type] || colors.info};
+                    color: ${type === 'warning' ? 'black' : 'white'};
+                    padding: 15px 20px;
+                    border-radius: 12px;
+                    font-weight: 600;
+                    z-index: 3000;
+                    animation: slideInNotification 0.3s ease;
+                    max-width: 300px;
+                    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+                    font-size: 14px;
                 `;
                 
-                particle.style.setProperty('--end-x', Math.cos(angle) * distance + 'px');
-                particle.style.setProperty('--end-y', Math.sin(angle) * distance + 'px');
+                notification.textContent = message;
+                document.body.appendChild(notification);
                 
-                explosionContainer.appendChild(particle);
-            }
-            
-            if (!document.getElementById('explosion-keyframes')) {
-                const style = document.createElement('style');
-                style.id = 'explosion-keyframes';
-                style.textContent = `
-                    @keyframes explodeParticle {
-                        0% {
-                            transform: translate(-50%, -50%) scale(1);
-                            opacity: 1;
-                        }
-                        100% {
-                            transform: translate(calc(-50% + var(--end-x)), calc(-50% + var(--end-y))) scale(0);
-                            opacity: 0;
-                        }
-                    }
-                    @keyframes winFlash {
-                        0% { opacity: 0; }
-                        50% { opacity: 1; }
-                        100% { opacity: 0; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-            
-            setTimeout(() => {
-                explosionContainer.remove();
-            }, 1000);
-        }
-
-        function updateDisplay() {
-            // Multiplier
-            multiplierEl.textContent = currentMultiplier.toFixed(2) + 'x';
-            multiplierEl.className = `multiplier ${gameState}`;
-            
-            // Plane
-            planeEl.className = `plane ${gameState}`;
-            
-            // Status
-            let statusText = '';
-            switch (gameState) {
-                case 'waiting':
-                    statusText = 'Waiting for next flight...';
-                    break;
-                case 'betting':
-                    statusText = 'Place your bets!';
-                    break;
-                case 'flying':
-                    statusText = 'Flying... Cash out anytime!';
-                    break;
-                case 'crashed':
-                    statusText = `Crashed at ${currentMultiplier.toFixed(2)}x`;
-                    break;
-            }
-            statusEl.textContent = statusText;
-            statusEl.className = `status ${gameState}`;
-            
-            // Buttons
-            placeBetBtn.disabled = gameState !== 'betting' || hasBet;
-            cashoutBtn.disabled = gameState !== 'flying' || !hasBet || playerCashedOut;
-            
-            // Update cashout button text
-            if (hasBet && gameState === 'flying' && !playerCashedOut) {
-                const potentialWin = Math.floor(playerBet * currentMultiplier);
-                cashoutBtn.textContent = `Cash Out ${potentialWin}⭐`;
-                cashoutBtn.classList.remove('inactive');
-            } else {
-                cashoutBtn.textContent = 'Cash Out';
-                if (!hasBet || gameState !== 'flying' || playerCashedOut) {
-                    cashoutBtn.classList.add('inactive');
-                }
-            }
-            
-            // Balance
-            balanceEl.textContent = balance + '⭐';
-        }
-
-        function updateStats() {
-            totalBetEl.textContent = totalBet + '⭐';
-            totalWinEl.textContent = totalWin + '⭐';
-        }
-
-        function updateHistory() {
-            historyEl.innerHTML = '';
-            history.forEach(mult => {
-                const item = document.createElement('div');
-                item.className = 'history-item';
-                item.textContent = mult.toFixed(2) + 'x';
-                
-                if (mult < 2) {
-                    item.classList.add('low');
-                } else if (mult < 5) {
-                    item.classList.add('medium');
-                } else {
-                    item.classList.add('high');
-                }
-                
-                historyEl.appendChild(item);
-            });
-        }
-
-        // Notification system
-        function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            const colors = {
-                success: 'linear-gradient(135deg, #00ff88, #00cc6a)',
-                error: 'linear-gradient(135deg, #ff4757, #c44569)',
-                warning: 'linear-gradient(135deg, #ffc107, #f39c12)',
-                info: 'linear-gradient(135deg, #17a2b8, #138496)'
-            };
-            
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: ${colors[type] || colors.info};
-                color: ${type === 'warning' ? 'black' : 'white'};
-                padding: 15px 20px;
-                border-radius: 12px;
-                font-weight: 600;
-                z-index: 3000;
-                animation: slideInNotification 0.3s ease;
-                max-width: 300px;
-                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-                font-size: 14px;
-            `;
-            
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.animation = 'slideInNotification 0.3s ease reverse';
                 setTimeout(() => {
-                    notification.remove();
-                }, 300);
-            }, 3000);
-        }
-
-        // Mobile viewport handling
-        function setVH() {
-            let vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-        }
-
-        // Sync balance with server
-        async function syncBalance() {
-            try {
-                const response = await fetch(`/api/player/balance/${userTelegramId}`);
-                const data = await response.json();
-                if (data.success) {
-                    balance = data.balance;
-                    totalBet = data.totalWagered || 0;
-                    totalWin = data.totalWon || 0;
-                    updateDisplay();
-                    updateStats();
-                }
-            } catch (error) {
-                console.error('Balance sync failed:', error);
+                    notification.style.animation = 'slideInNotification 0.3s ease reverse';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.remove();
+                        }
+                    }, 300);
+                }, 3000);
             }
         }
 
-        // Menu functions (if needed)
-        function toggleMenu() {
-            // Add menu functionality if needed
+        // Initialize game when page loads
+        let aviatorGame;
+        
+        function initGame() {
+            aviatorGame = new AviatorGame();
+            aviatorGame.init();
+            
+            // Make game globally accessible for debugging
+            window.aviatorGame = aviatorGame;
         }
 
-        function closeMenu() {
-            // Add menu functionality if needed
+        // Start game when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initGame);
+        } else {
+            initGame();
         }
-
-        // Initialize everything
-        function init() {
-            console.log('🚀 Initializing Aviator game...');
-            
-            // Initialize sounds
-            initSounds();
-            
-            // Set mobile viewport
-            setVH();
-            window.addEventListener('resize', setVH);
-            
-            // Initialize display
-            updateDisplay();
-            updateHistory();
-            updateStats();
-            
-            // Connect to server
-            initSocketConnection();
-            
-            // Sync balance every 30 seconds
-            setInterval(syncBalance, 30000);
-            
-            console.log('✅ Game initialized!');
-        }
-
-        // Start the game when page loads
-        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
